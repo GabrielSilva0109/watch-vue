@@ -39,7 +39,7 @@ const handleLogout = () => {
     <div v-if="currentView === 'login'" class="flex items-center justify-center min-h-screen p-4">
       <div class="w-full max-w-md">
         <div class="text-center mb-8">
-          <h1 class="text-4xl font-bold text-text-primary mb-2">Watch Vue</h1>
+          <h1 class="text-4xl font-bold text-text-primary mb-2">Watch Tasks</h1>
           <p class="text-text-secondary">Faça login para continuar</p>
         </div>
         <LoginForm 

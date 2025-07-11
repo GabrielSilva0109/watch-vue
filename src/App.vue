@@ -5,7 +5,7 @@ import RegisterForm from './components/RegisterForm.vue'
 import Dashboard from './components/Dashboard.vue'
 
 // Estados da aplicação
-const currentView = ref('login') // 'login', 'register', 'dashboard'
+const currentView = ref('login') 
 const user = ref(null)
 
 // Funções para alternar entre telas

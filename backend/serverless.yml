@@ -1,0 +1,138 @@
+service: watch-vue-backend
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  
+  environment:
+    TASKS_TABLE: ${self:service}-tasks-${self:provider.stage}
+    USERS_TABLE: ${self:service}-users-${self:provider.stage}
+    JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key'}
+    
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TASKS_TABLE}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.USERS_TABLE}
+
+functions:
+  # Auth Functions
+  register:
+    handler: src/handlers/auth.register
+    events:
+      - http:
+          path: auth/register
+          method: post
+          cors: true
+          
+  login:
+    handler: src/handlers/auth.login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+          
+  # Task Functions
+  getTasks:
+    handler: src/handlers/tasks.getTasks
+    events:
+      - http:
+          path: tasks
+          method: get
+          cors: true
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
+            
+  createTask:
+    handler: src/handlers/tasks.createTask
+    events:
+      - http:
+          path: tasks
+          method: post
+          cors: true
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
+            
+  updateTask:
+    handler: src/handlers/tasks.updateTask
+    events:
+      - http:
+          path: tasks/{id}
+          method: put
+          cors: true
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
+            
+  deleteTask:
+    handler: src/handlers/tasks.deleteTask
+    events:
+      - http:
+          path: tasks/{id}
+          method: delete
+          cors: true
+          authorizer:
+            name: authorize
+            resultTtlInSeconds: 0
+            
+  # Authorizer
+  authorize:
+    handler: src/handlers/auth.authorize
+
+resources:
+  Resources:
+    TasksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TASKS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: taskId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: taskId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST

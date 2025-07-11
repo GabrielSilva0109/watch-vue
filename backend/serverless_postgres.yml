@@ -1,0 +1,96 @@
+service: watch-vue-backend
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  
+  environment:
+    JWT_SECRET: ${env:JWT_SECRET, 'your-secret-key'}
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: ${env:DB_PORT, '5432'}
+    DB_NAME: ${env:DB_NAME}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    NODE_ENV: ${opt:stage, 'dev'}
+    
+  # VPC Configuration para conectar com RDS
+  vpc:
+    securityGroupIds:
+      - sg-12345678  # Substitua pelo seu Security Group
+    subnetIds:
+      - subnet-12345678  # Substitua pelas suas Subnets
+      - subnet-87654321
+
+functions:
+  # Auth Functions
+  register:
+    handler: src/handlers/auth_postgres.register
+    events:
+      - http:
+          path: auth/register
+          method: post
+          cors: true
+          
+  login:
+    handler: src/handlers/auth_postgres.login
+    events:
+      - http:
+          path: auth/login
+          method: post
+          cors: true
+          
+  authorize:
+    handler: src/handlers/auth_postgres.authorize
+    
+  # Task Functions
+  getTasks:
+    handler: src/handlers/tasks_postgres.getTasks
+    events:
+      - http:
+          path: tasks
+          method: get
+          cors: true
+          authorizer:
+            name: authorize
+            
+  createTask:
+    handler: src/handlers/tasks_postgres.createTask
+    events:
+      - http:
+          path: tasks
+          method: post
+          cors: true
+          authorizer:
+            name: authorize
+            
+  updateTask:
+    handler: src/handlers/tasks_postgres.updateTask
+    events:
+      - http:
+          path: tasks/{id}
+          method: put
+          cors: true
+          authorizer:
+            name: authorize
+            
+  deleteTask:
+    handler: src/handlers/tasks_postgres.deleteTask
+    events:
+      - http:
+          path: tasks/{id}
+          method: delete
+          cors: true
+          authorizer:
+            name: authorize
+
+# Remover recursos do DynamoDB
+# resources:
+#   Resources:
+#     # RDS será criado separadamente via Console AWS ou CloudFormation

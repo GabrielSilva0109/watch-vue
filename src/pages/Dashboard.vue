@@ -5,6 +5,7 @@
       :active-tab.sync="activeTab" 
       @logout="$emit('logout')"
       @tab-change="handleTabChange"
+      @user-update="handleUserUpdate"
     />
 
     <!-- Main Content -->
@@ -77,150 +78,19 @@
       </div>
 
       <!-- Tab Content: Usuários -->
-      <div v-if="activeTab === 'users'">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-text-primary">Usuários da Plataforma</h2>
-          <button
-            @click="loadUsers"
-            class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
-          >
-            Atualizar
-          </button>
-        </div>
-        
-        <div v-if="usersLoading" class="text-center py-8">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p class="text-text-secondary mt-4">Carregando usuários...</p>
-        </div>
-        
-        <div v-else-if="users.length === 0" class="text-center py-8">
-          <p class="text-text-muted">Nenhum usuário encontrado</p>
-        </div>
-        
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="u in users" :key="u.id" class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center mb-4">
-              <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-4">
-                <span class="text-white text-lg font-bold">{{ u.name.charAt(0).toUpperCase() }}</span>
-              </div>
-              <div>
-                <h3 class="font-semibold text-text-primary">{{ u.name }}</h3>
-                <p class="text-sm text-text-secondary">{{ u.email }}</p>
-              </div>
-            </div>
-            
-            <div class="space-y-3">
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-text-secondary">Não iniciadas:</span>
-                <span class="text-sm font-medium text-yellow-500 bg-yellow-500/20 px-2 py-1 rounded">
-                  {{ u.stats?.not_started || 0 }}
-                </span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-text-secondary">Em progresso:</span>
-                <span class="text-sm font-medium text-blue-500 bg-blue-500/20 px-2 py-1 rounded">
-                  {{ u.stats?.in_progress || 0 }}
-                </span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-text-secondary">Pendentes:</span>
-                <span class="text-sm font-medium text-orange-500 bg-orange-500/20 px-2 py-1 rounded">
-                  {{ u.stats?.pending || 0 }}
-                </span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-sm text-text-secondary">Concluídas:</span>
-                <span class="text-sm font-medium text-green-500 bg-green-500/20 px-2 py-1 rounded">
-                  {{ u.stats?.completed || 0 }}
-                </span>
-              </div>
-              <div class="flex justify-between items-center border-t border-background-lighter pt-3">
-                <span class="text-sm font-medium text-text-secondary">Total:</span>
-                <span class="text-sm font-bold text-text-primary bg-background px-2 py-1 rounded">
-                  {{ u.stats?.total || 0 }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <UsersTab 
+        v-if="activeTab === 'users'"
+        :users="users"
+        :loading="usersLoading"
+        @refresh="loadUsers"
+      />
 
       <!-- Tab Content: Relatórios -->
-      <div v-if="activeTab === 'reports'">
-        <div class="mb-6">
-          <h2 class="text-2xl font-bold text-text-primary mb-2">Relatórios</h2>
-          <p class="text-text-secondary">Análise geral da plataforma</p>
-        </div>
-
-        <!-- Estatísticas Gerais -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard 
-            title="Total de Usuários"
-            :value="users.length"
-            icon="👥"
-            icon-bg-class="bg-blue-500"
-          />
-
-          <StatsCard 
-            title="Total de Tarefas"
-            :value="getTotalTasks()"
-            icon="📊"
-            icon-bg-class="bg-green-500"
-          />
-
-          <StatsCard 
-            title="Tarefas Pendentes"
-            :value="getTasksByStatus('pending').length"
-            icon="⏳"
-            icon-bg-class="bg-yellow-500"
-          />
-
-          <StatsCard 
-            title="Tarefas Concluídas"
-            :value="getTasksByStatus('completed').length"
-            icon="✅"
-            icon-bg-class="bg-green-500"
-          />
-        </div>
-
-        <!-- Gráficos e Análises -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Usuários Mais Ativos -->
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Usuários Mais Ativos</h3>
-            <div class="space-y-3">
-              <div v-for="user in getMostActiveUsers()" :key="user.id" class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-3">
-                    <span class="text-white text-sm">{{ user.name.charAt(0).toUpperCase() }}</span>
-                  </div>
-                  <span class="text-text-primary">{{ user.name }}</span>
-                </div>
-                <span class="text-sm font-medium text-text-secondary">{{ user.stats?.total || 0 }} tarefas</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Distribuição por Categoria -->
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <h3 class="text-lg font-semibold text-text-primary mb-4">Tarefas por Categoria</h3>
-            <div class="space-y-3">
-              <div v-for="category in getCategoryDistribution()" :key="category.name" class="flex items-center justify-between">
-                <span class="text-text-primary">{{ category.name.charAt(0).toUpperCase() + category.name.slice(1) }}</span>
-                <div class="flex items-center">
-                  <div class="w-20 h-2 bg-background-lighter rounded-full mr-3">
-                    <div 
-                      class="h-2 bg-primary rounded-full" 
-                      :style="{ width: `${(category.count / getTotalTasks()) * 100}%` }"
-                    ></div>
-                  </div>
-                  <span class="text-sm font-medium text-text-secondary">{{ category.count }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ReportsTab 
+        v-if="activeTab === 'reports'"
+        :users="users"
+        :tasks="tasks"
+      />
     </main>
 
     <!-- Add Task Modal -->
@@ -239,10 +109,12 @@
 <script setup>
 
 import { ref, onMounted, computed } from 'vue'
-import Header from './Header.vue'
-import CreateTaskModal from './CreateTaskModal.vue'
-import StatsCard from './StatsCard.vue'
-import KanbanBoard from './KanbanBoard.vue'
+import Header from '../components/Header.vue'
+import CreateTaskModal from '../components/CreateTaskModal.vue'
+import StatsCard from '../components/StatsCard.vue'
+import KanbanBoard from '../components/KanbanBoard.vue'
+import UsersTab from '../components/UsersTab.vue'
+import ReportsTab from '../components/ReportsTab.vue'
 
 const props = defineProps({
   user: {
@@ -250,8 +122,6 @@ const props = defineProps({
     required: true
   }
 })
-
-defineEmits(['logout'])
 
 // Estados
 const activeTab = ref('tasks')
@@ -270,6 +140,21 @@ const updatingTasks = ref([])
 const deletingTasks = ref([])
 
 const isEditingTask = computed(() => editingTask.value !== null)
+
+const emit = defineEmits(['logout', 'user-update'])
+
+function handleUserUpdate(updatedUserData) {
+  // Emitir evento para o componente pai (App.vue) atualizar o user
+  emit('user-update', updatedUserData)
+  
+  // Atualizar no localStorage
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+  const updatedUser = {
+    ...currentUser,
+    ...updatedUserData
+  }
+  localStorage.setItem('user', JSON.stringify(updatedUser))
+}
 
 const openEditModal = (task) => {
   editingTask.value = task
@@ -333,8 +218,6 @@ const handleTaskSubmit = async (taskData) => {
         taskDataToSend.dependency_title = taskData.dependency_title
       }
 
-      console.log('📤 Dados enviados para o backend:', taskDataToSend)
-
       const response = await fetch('http://localhost:3000/dev/tasks', {
         method: 'POST',
         headers: {
@@ -345,7 +228,6 @@ const handleTaskSubmit = async (taskData) => {
       })
 
       const data = await response.json()
-      console.log('📥 Resposta do backend:', data)
 
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao criar tarefa')
@@ -384,8 +266,6 @@ const loadTasks = async () => {
     })
 
     const data = await response.json()
-
-    console.log('Dados recebidos:', data)
 
     if (!response.ok) {
       throw new Error(data.message || 'Erro ao carregar tarefas')
@@ -489,7 +369,7 @@ const handleDrop = async (event, newStatus) => {
     try {
       if (!canMoveTask(draggedTask.value, newStatus)) {
         const dependencyInfo = draggedTask.value.dependency_info
-        taskError.value = `Esta tarefa sds de "${dependencyInfo.task_title}" (${dependencyInfo.user_name}). Aguarde a conclusão da tarefa dependente.`
+        taskError.value = `Esta tarefa está bloqueada até que "${dependencyInfo.task_title}" de ${dependencyInfo.user_name} seja concluída. Aguarde a finalização da tarefa dependente.`
         draggedTask.value = null
         return
       }

@@ -115,3 +115,12 @@ functions:
           path: users/{id}/stats
           method: get
           cors: true
+
+  editUser:
+    handler: src/handlers/users_simple.editUser
+    events:
+      - http:
+          path: users/{id}
+          method: put
+          cors: true
+

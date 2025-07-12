@@ -40,4 +40,5 @@ npm install --save-dev vitest @vue/test-utils jsdom @vitejs/plugin-vue
 
 ```bash
 # Executar todos os testes
-cd backend && npm test
+cd backend 
+npm test

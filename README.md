@@ -17,3 +17,27 @@ You can deploy your new Vite project with a single command from your terminal us
 ```shell
 $ vercel
 ```
+# Testes Unitários com Jest
+
+Este projeto utiliza **Jest** para testes unitários no backend (Node.js/Serverless) e **Vitest** para o frontend (Vue.js).
+
+## 📋 Pré-requisitos
+
+- Node.js 16+ instalado
+- NPM ou Yarn
+
+## 🚀 Configuração dos Testes
+
+### Backend (Jest)
+
+#### 1. Instalar Dependências
+
+```bash
+npm install --save-dev vitest @vue/test-utils jsdom @vitejs/plugin-vue
+```
+
+### 2. Executando os Testes
+
+```bash
+# Executar todos os testes
+cd backend && npm test

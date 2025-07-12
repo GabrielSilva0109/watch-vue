@@ -50,14 +50,6 @@ functions:
           method: get
           cors: true
             
-  getAllTasks:
-    handler: src/handlers/tasks_simple.getAllTasks
-    events:
-      - http:
-          path: tasks/all
-          method: get
-          cors: true
-            
   createTask:
     handler: src/handlers/tasks_simple.createTask
     events:
@@ -80,38 +72,4 @@ functions:
       - http:
           path: tasks/{id}
           method: delete
-          cors: true
-          
-  # Category Functions
-  getCategories:
-    handler: src/handlers/tasks_simple.getCategories
-    events:
-      - http:
-          path: tasks/categories
-          method: get
-          cors: true
-          
-  getTasksByCategory:
-    handler: src/handlers/tasks_simple.getTasksByCategory
-    events:
-      - http:
-          path: tasks/category/{category}
-          method: get
-          cors: true
-
-  # User Functions
-  getUsers:
-    handler: src/handlers/users_simple.getUsers
-    events:
-      - http:
-          path: users
-          method: get
-          cors: true
-            
-  getUserStats:
-    handler: src/handlers/users_simple.getUserStats
-    events:
-      - http:
-          path: users/{id}/stats
-          method: get
           cors: true

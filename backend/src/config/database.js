@@ -5,11 +5,13 @@ const dbConfig = {
   client: 'pg',
   connection: {
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'watch_vue_db',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    database: process.env.DB_NAME || 'postgres',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.DB_HOST && process.env.DB_HOST.includes('amazonaws.com') 
+      ? { rejectUnauthorized: false } 
+      : false
   },
   pool: {
     min: 2,

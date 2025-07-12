@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import api from '../services/api'
 
 // Props recebidas do componente pai
 const props = defineProps({
@@ -13,16 +14,9 @@ const props = defineProps({
 const emit = defineEmits(['logout'])
 
 // Estados das tarefas
-const tasks = ref([
-  { id: 1, title: 'Configurar ambiente de desenvolvimento', description: 'Instalar Node.js, Vue.js e dependências', status: 'pending', priority: 'high' },
-  { id: 2, title: 'Criar componente de login', description: 'Desenvolver formulário de autenticação', status: 'completed', priority: 'medium' },
-  { id: 3, title: 'Implementar dashboard', description: 'Criar painel principal da aplicação', status: 'in-progress', priority: 'high' },
-  { id: 4, title: 'Adicionar validação de formulários', description: 'Implementar validação nos campos', status: 'pending', priority: 'medium' },
-  { id: 5, title: 'Configurar tema escuro', description: 'Aplicar paleta de cores personalizada', status: 'completed', priority: 'low' },
-  { id: 6, title: 'Criar sistema de drag and drop', description: 'Implementar arrastar e soltar para tarefas', status: 'in-progress', priority: 'high' },
-  { id: 7, title: 'Otimizar performance', description: 'Melhorar velocidade de carregamento', status: 'not-started', priority: 'low' },
-  { id: 8, title: 'Adicionar testes unitários', description: 'Implementar testes para componentes', status: 'not-started', priority: 'medium' },
-])
+const tasks = ref([])
+const loading = ref(false)
+const error = ref('')
 
 // Estados para drag and drop
 const draggedTask = ref(null)
@@ -36,6 +30,28 @@ const currentTime = ref(new Date().toLocaleString())
 setInterval(() => {
   currentTime.value = new Date().toLocaleString()
 }, 1000)
+
+// Carregar tarefas da API
+const loadTasks = async () => {
+  loading.value = true
+  error.value = ''
+  
+  try {
+    const response = await api.getTasks()
+    tasks.value = response.tasks || []
+    console.log('Tarefas carregadas:', tasks.value)
+  } catch (err) {
+    error.value = err.message || 'Erro ao carregar tarefas'
+    console.error('Erro ao carregar tarefas:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Carregar tarefas quando o componente for montado
+onMounted(() => {
+  loadTasks()
+})
 
 // Funções para gerenciar tarefas
 const getTasksByStatus = (status) => {
@@ -52,13 +68,25 @@ const handleDragOver = (event) => {
   event.dataTransfer.dropEffect = 'move'
 }
 
-const handleDrop = (event, newStatus) => {
+const handleDrop = async (event, newStatus) => {
   event.preventDefault()
   if (draggedTask.value) {
-    const taskIndex = tasks.value.findIndex(t => t.id === draggedTask.value.id)
-    if (taskIndex !== -1) {
-      tasks.value[taskIndex].status = newStatus
+    try {
+      // Atualizar no backend
+      await api.updateTask(draggedTask.value.id, { status: newStatus })
+      
+      // Atualizar no frontend
+      const taskIndex = tasks.value.findIndex(t => t.id === draggedTask.value.id)
+      if (taskIndex !== -1) {
+        tasks.value[taskIndex].status = newStatus
+      }
+      
+      console.log('Tarefa atualizada:', draggedTask.value.id, 'para', newStatus)
+    } catch (err) {
+      error.value = err.message || 'Erro ao atualizar tarefa'
+      console.error('Erro ao atualizar tarefa:', err)
     }
+    
     draggedTask.value = null
   }
 }
@@ -82,23 +110,39 @@ const getStatusTitle = (status) => {
   }
 }
 
-const addNewTask = () => {
+const addNewTask = async () => {
   if (newTask.value.title.trim()) {
-    const newId = Math.max(...tasks.value.map(t => t.id)) + 1
-    tasks.value.push({
-      id: newId,
-      title: newTask.value.title.trim(),
-      description: newTask.value.description.trim(),
-      status: 'not-started',
-      priority: newTask.value.priority
-    })
-    newTask.value = { title: '', description: '', priority: 'medium' }
-    showAddTaskModal.value = false
+    try {
+      const response = await api.createTask({
+        title: newTask.value.title.trim(),
+        description: newTask.value.description.trim(),
+        status: 'not-started'
+      })
+      
+      // Adicionar a nova tarefa à lista
+      tasks.value.push(response.task)
+      
+      // Limpar o formulário
+      newTask.value = { title: '', description: '', priority: 'medium' }
+      showAddTaskModal.value = false
+      
+      console.log('Nova tarefa criada:', response.task)
+    } catch (err) {
+      error.value = err.message || 'Erro ao criar tarefa'
+      console.error('Erro ao criar tarefa:', err)
+    }
   }
 }
 
-const deleteTask = (taskId) => {
-  tasks.value = tasks.value.filter(task => task.id !== taskId)
+const deleteTask = async (taskId) => {
+  try {
+    await api.deleteTask(taskId)
+    tasks.value = tasks.value.filter(task => task.id !== taskId)
+    console.log('Tarefa deletada:', taskId)
+  } catch (err) {
+    error.value = err.message || 'Erro ao deletar tarefa'
+    console.error('Erro ao deletar tarefa:', err)
+  }
 }
 
 // Função de logout
@@ -141,6 +185,22 @@ const handleLogout = () => {
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div class="px-4 py-6 sm:px-0">
+        <!-- Mensagem de erro -->
+        <div v-if="error" class="mb-6 bg-red-900/20 border border-red-600/30 rounded-lg p-4">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="text-red-400">{{ error }}</span>
+          </div>
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="mb-6 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span class="ml-2 text-text-secondary">Carregando tarefas...</span>
+        </div>
+
         <!-- Welcome Card -->
         <div class="bg-background-light rounded-lg shadow p-6 mb-6 border border-background-lighter">
           <h2 class="text-xl font-semibold text-text-primary mb-2">

@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import api from '../services/api'
 
 // Estados do formulário
 const name = ref('')
@@ -7,6 +8,8 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const isLoading = ref(false)
+const error = ref('')
+const success = ref('')
 
 // Emits para comunicar com o componente pai
 const emit = defineEmits(['switch-to-login', 'register-success'])
@@ -14,32 +17,51 @@ const emit = defineEmits(['switch-to-login', 'register-success'])
 // Função de cadastro
 const handleRegister = async () => {
   if (!name.value || !email.value || !password.value || !confirmPassword.value) {
-    alert('Por favor, preencha todos os campos')
+    error.value = 'Por favor, preencha todos os campos'
     return
   }
 
   if (password.value !== confirmPassword.value) {
-    alert('As senhas não coincidem')
+    error.value = 'As senhas não coincidem'
     return
   }
 
   if (password.value.length < 6) {
-    alert('A senha deve ter pelo menos 6 caracteres')
+    error.value = 'A senha deve ter pelo menos 6 caracteres'
     return
   }
 
   isLoading.value = true
+  error.value = ''
+  success.value = ''
   
-  // Simular uma chamada de API
-  setTimeout(() => {
-    console.log('Cadastro realizado:', { 
-      name: name.value, 
-      email: email.value, 
-      password: password.value 
+  try {
+    const response = await api.register({
+      name: name.value,
+      email: email.value,
+      password: password.value
     })
+    
+    console.log('Cadastro realizado com sucesso:', response.user)
+    success.value = 'Conta criada com sucesso! Você pode fazer login agora.'
+    
+    // Limpar formulário
+    name.value = ''
+    email.value = ''
+    password.value = ''
+    confirmPassword.value = ''
+    
+    // Após 2 segundos, mudar para tela de login
+    setTimeout(() => {
+      emit('switch-to-login')
+    }, 2000)
+    
+  } catch (err) {
+    error.value = err.message || 'Erro ao criar conta. Tente novamente.'
+    console.error('Erro no cadastro:', err)
+  } finally {
     isLoading.value = false
-    emit('register-success', { name: name.value, email: email.value })
-  }, 1000)
+  }
 }
 </script>
 
@@ -110,6 +132,16 @@ const handleRegister = async () => {
             class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary placeholder-text-muted"
             placeholder="••••••••"
           />
+        </div>
+
+        <!-- Mensagem de erro -->
+        <div v-if="error" class="text-red-400 text-sm text-center bg-red-900/20 border border-red-600/30 rounded-md p-3">
+          {{ error }}
+        </div>
+
+        <!-- Mensagem de sucesso -->
+        <div v-if="success" class="text-green-400 text-sm text-center bg-green-900/20 border border-green-600/30 rounded-md p-3">
+          {{ success }}
         </div>
 
         <!-- Botão de Cadastro -->

@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue'
+import api from '../services/api'
 
 // Estados do formulário
 const email = ref('')
 const password = ref('')
 const isLoading = ref(false)
+const error = ref('')
 
 // Emits para comunicar com o componente pai
 const emit = defineEmits(['switch-to-register', 'login-success'])
@@ -12,18 +14,31 @@ const emit = defineEmits(['switch-to-register', 'login-success'])
 // Função de login
 const handleLogin = async () => {
   if (!email.value || !password.value) {
-    alert('Por favor, preencha todos os campos')
+    error.value = 'Por favor, preencha todos os campos'
     return
   }
 
   isLoading.value = true
+  error.value = ''
   
-  // Simular uma chamada de API
-  setTimeout(() => {
-    console.log('Login realizado:', { email: email.value, password: password.value })
+  try {
+    const response = await api.login({
+      email: email.value,
+      password: password.value
+    })
+    
+    // Salvar dados do usuário
+    localStorage.setItem('user', JSON.stringify(response.user))
+    
+    console.log('Login realizado com sucesso:', response.user)
+    emit('login-success', response.user)
+    
+  } catch (err) {
+    error.value = err.message || 'Erro ao fazer login. Verifique suas credenciais.'
+    console.error('Erro no login:', err)
+  } finally {
     isLoading.value = false
-    emit('login-success', { email: email.value })
-  }, 1000)
+  }
 }
 </script>
 
@@ -63,6 +78,11 @@ const handleLogin = async () => {
             class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary placeholder-text-muted"
             placeholder="••••••••"
           />
+        </div>
+
+        <!-- Mensagem de erro -->
+        <div v-if="error" class="text-red-400 text-sm text-center bg-red-900/20 border border-red-600/30 rounded-md p-3">
+          {{ error }}
         </div>
 
         <!-- Botão de Login -->

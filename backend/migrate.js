@@ -4,11 +4,8 @@ const fs = require('fs');
 
 async function runMigrations() {
   try {
-    console.log('🔄 Iniciando migrações...');
-    
     // Verificar se o banco existe
     await db.raw('SELECT 1');
-    console.log('✅ Conectado ao banco de dados');
     
     // Executar migrações
     const migrationFiles = fs.readdirSync('./migrations').sort();
@@ -21,11 +18,8 @@ async function runMigrations() {
         console.log(`✅ Migração concluída: ${file}`);
       }
     }
-    
-    console.log('🎉 Todas as migrações foram executadas com sucesso!');
-    
+
     // Inserir dados de teste (opcional)
-    console.log('🔄 Inserindo dados de teste...');
     await insertTestData();
     
   } catch (error) {
@@ -40,7 +34,6 @@ async function insertTestData() {
     // Verificar se já existem dados
     const userCount = await db('users').count('id as count').first();
     if (userCount.count > 0) {
-      console.log('⚠️  Dados já existem, pulando inserção de teste');
       return;
     }
     

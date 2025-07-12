@@ -1,8 +1,447 @@
+<template>
+  <div class="min-h-screen bg-background">
+    <!-- Header -->
+    <header class="bg-background-light border-b border-background-lighter">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <div class="flex items-center space-x-4">
+            <h1 class="text-2xl font-bold text-primary">Watch Tasks</h1>
+            <span class="text-text-secondary">Bem-vindo, {{ user.name }}!</span>
+          </div>
+          <div class="flex items-center space-x-4">
+            <button
+              @click="toggleUsersList"
+              class="text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {{ showUsersList ? 'Ocultar' : 'Ver' }} Usuários
+            </button>
+            <button
+              @click="showAddTaskModal = true"
+              class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-hover transition-colors"
+            >
+              Nova Tarefa
+            </button>
+            <button
+              @click="$emit('logout')"
+              class="text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Sair
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm">📋</span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-text-secondary">Total</p>
+              <p class="text-2xl font-semibold text-text-primary">{{ tasks.length }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm">⏳</span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-text-secondary">Não Iniciadas</p>
+              <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('not-started').length }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm">🔄</span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-text-secondary">Em Progresso</p>
+              <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('in-progress').length }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm">✅</span>
+              </div>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-text-secondary">Concluídas</p>
+              <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('completed').length }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users List -->
+      <div v-if="showUsersList" class="mb-8">
+        <div class="bg-background-light rounded-lg border border-background-lighter p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-text-primary">Usuários da Plataforma</h3>
+            <button
+              @click="loadUsers"
+              class="text-primary hover:text-primary-hover transition-colors"
+            >
+              Atualizar
+            </button>
+          </div>
+          
+          <div v-if="usersLoading" class="text-center py-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </div>
+          
+          <div v-else-if="users.length === 0" class="text-center py-4">
+            <p class="text-text-muted">Nenhum usuário encontrado</p>
+          </div>
+          
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="u in users" :key="u.id" class="bg-background p-4 rounded-lg border border-background-lighter">
+              <div class="flex items-center mb-3">
+                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center mr-3">
+                  <span class="text-white text-lg">{{ u.name.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div>
+                  <h4 class="font-medium text-text-primary">{{ u.name }}</h4>
+                  <p class="text-sm text-text-secondary">{{ u.email }}</p>
+                </div>
+              </div>
+              
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-text-secondary">Não iniciadas:</span>
+                  <span class="text-sm font-medium text-yellow-500">{{ u.stats?.not_started || 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-text-secondary">Em progresso:</span>
+                  <span class="text-sm font-medium text-blue-500">{{ u.stats?.in_progress || 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sm text-text-secondary">Concluídas:</span>
+                  <span class="text-sm font-medium text-green-500">{{ u.stats?.completed || 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-background-lighter pt-2">
+                  <span class="text-sm font-medium text-text-secondary">Total:</span>
+                  <span class="text-sm font-bold text-text-primary">{{ u.stats?.total || 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Error -->
+      <div v-if="taskError" class="mb-4 bg-red-900/20 border border-red-600/30 p-4 rounded-lg">
+        <p class="text-red-400">{{ taskError }}</p>
+        <button
+          @click="taskError = ''"
+          class="text-red-300 hover:text-red-400 text-sm mt-2"
+        >
+          Fechar
+        </button>
+      </div>
+
+      <!-- Kanban Board -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Não Iniciadas -->
+        <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
+          <h3 class="font-semibold text-text-primary mb-4 flex items-center">
+            <span class="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>
+            Não Iniciadas ({{ getTasksByStatus('not-started').length }})
+          </h3>
+          <div
+            class="space-y-3 min-h-[400px]"
+            @dragover="handleDragOver"
+            @drop="handleDrop($event, 'not-started')"
+          >
+            <div
+              v-for="task in getTasksByStatus('not-started')"
+              :key="task.id"
+              class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
+              draggable="true"
+              @dragstart="handleDragStart($event, task)"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="text-red-400 hover:text-red-300 ml-2"
+                >
+                  ✕
+                </button>
+              </div>
+              <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
+              
+              <!-- Categoria -->
+              <div class="flex items-center mb-2">
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                  {{ task.category || 'Geral' }}
+                </span>
+              </div>
+              
+              <!-- Dependência -->
+              <div v-if="task.depends_on_task_id && task.dependency_info" class="mt-2 p-2 bg-red-900/20 border border-red-600/30 rounded">
+                <p class="text-xs text-red-400">
+                  <strong>Depende de:</strong> {{ task.dependency_info.task_title }}
+                </p>
+                <p class="text-xs text-red-400">
+                  <strong>Usuário:</strong> {{ task.dependency_info.user_name }}
+                </p>
+                <p class="text-xs text-red-400">
+                  <strong>Status:</strong> {{ task.dependency_info.completed ? '✅ Concluída' : '⏳ Pendente' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Em Progresso -->
+        <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
+          <h3 class="font-semibold text-text-primary mb-4 flex items-center">
+            <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+            Em Progresso ({{ getTasksByStatus('in-progress').length }})
+          </h3>
+          <div
+            class="space-y-3 min-h-[400px]"
+            @dragover="handleDragOver"
+            @drop="handleDrop($event, 'in-progress')"
+          >
+            <div
+              v-for="task in getTasksByStatus('in-progress')"
+              :key="task.id"
+              class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
+              draggable="true"
+              @dragstart="handleDragStart($event, task)"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="text-red-400 hover:text-red-300 ml-2"
+                >
+                  ✕
+                </button>
+              </div>
+              <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
+              
+              <!-- Categoria -->
+              <div class="flex items-center mb-2">
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                  {{ task.category || 'Geral' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pendentes -->
+        <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
+          <h3 class="font-semibold text-text-primary mb-4 flex items-center">
+            <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+            Pendentes ({{ getTasksByStatus('pending').length }})
+          </h3>
+          <div
+            class="space-y-3 min-h-[400px]"
+            @dragover="handleDragOver"
+            @drop="handleDrop($event, 'pending')"
+          >
+            <div
+              v-for="task in getTasksByStatus('pending')"
+              :key="task.id"
+              class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
+              draggable="true"
+              @dragstart="handleDragStart($event, task)"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="text-red-400 hover:text-red-300 ml-2"
+                >
+                  ✕
+                </button>
+              </div>
+              <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
+              
+              <!-- Categoria -->
+              <div class="flex items-center mb-2">
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                  {{ task.category || 'Geral' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concluídas -->
+        <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
+          <h3 class="font-semibold text-text-primary mb-4 flex items-center">
+            <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+            Concluídas ({{ getTasksByStatus('completed').length }})
+          </h3>
+          <div
+            class="space-y-3 min-h-[400px]"
+            @dragover="handleDragOver"
+            @drop="handleDrop($event, 'completed')"
+          >
+            <div
+              v-for="task in getTasksByStatus('completed')"
+              :key="task.id"
+              class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
+              draggable="true"
+              @dragstart="handleDragStart($event, task)"
+            >
+              <div class="flex justify-between items-start mb-2">
+                <h4 class="font-medium text-text-primary line-through opacity-75">{{ task.title }}</h4>
+                <button
+                  @click="deleteTask(task.id)"
+                  class="text-red-400 hover:text-red-300 ml-2"
+                >
+                  ✕
+                </button>
+              </div>
+              <p class="text-sm text-text-secondary mb-2 line-through opacity-75">{{ task.description }}</p>
+              
+              <!-- Categoria -->
+              <div class="flex items-center mb-2">
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded opacity-75">
+                  {{ task.category || 'Geral' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Add Task Modal -->
+    <div v-if="showAddTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-background-light rounded-lg p-6 w-full max-w-md mx-4 border border-background-lighter">
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Nova Tarefa</h3>
+        
+        <form @submit.prevent="addNewTask" class="space-y-4">
+          <div>
+            <label class="block text-text-primary text-sm font-medium mb-1">
+              Título
+            </label>
+            <input
+              v-model="newTask.title"
+              type="text"
+              required
+              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Digite o título da tarefa"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-text-primary text-sm font-medium mb-1">
+              Descrição
+            </label>
+            <textarea
+              v-model="newTask.description"
+              rows="3"
+              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Descreva a tarefa"
+            ></textarea>
+          </div>
+          
+          <div>
+            <label class="block text-text-primary text-sm font-medium mb-1">
+              Categoria
+            </label>
+            <select
+              v-model="newTask.category"
+              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="geral">Geral</option>
+              <option value="trabalho">Trabalho</option>
+              <option value="pessoal">Pessoal</option>
+              <option value="urgente">Urgente</option>
+              <option value="projeto">Projeto</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-text-primary text-sm font-medium mb-1">
+              <input
+                v-model="newTask.hasDependency"
+                type="checkbox"
+                class="mr-2"
+              />
+              Esta tarefa depende de outra pessoa
+            </label>
+          </div>
+          
+          <div v-if="newTask.hasDependency" class="space-y-3 p-3 bg-background rounded border border-background-lighter">
+            <div>
+              <label class="block text-text-primary text-sm font-medium mb-1">
+                Email do usuário
+              </label>
+              <input
+                v-model="newTask.dependsOnUserEmail"
+                type="email"
+                class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-text-primary text-sm font-medium mb-1">
+                Título da tarefa dependente
+              </label>
+              <input
+                v-model="newTask.dependencyTitle"
+                type="text"
+                class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Ex: Comprar ingredientes"
+              />
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3">
+            <button
+              type="button"
+              @click="showAddTaskModal = false"
+              class="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              :disabled="taskLoading"
+              class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50"
+            >
+              {{ taskLoading ? 'Criando...' : 'Criar Tarefa' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../services/api'
 
-// Props recebidas do componente pai
 const props = defineProps({
   user: {
     type: Object,
@@ -10,54 +449,103 @@ const props = defineProps({
   }
 })
 
-// Emits para comunicar com o componente pai
-const emit = defineEmits(['logout'])
+defineEmits(['logout'])
 
-// Estados das tarefas
+// Estados
 const tasks = ref([])
-const loading = ref(false)
-const error = ref('')
-
-// Estados para drag and drop
-const draggedTask = ref(null)
+const users = ref([])
 const showAddTaskModal = ref(false)
-const newTask = ref({ title: '', description: '', priority: 'medium' })
+const showUsersList = ref(false)
+const tasksLoading = ref(false)
+const usersLoading = ref(false)
+const taskLoading = ref(false)
+const taskError = ref('')
+const draggedTask = ref(null)
 
-// Estado local
-const currentTime = ref(new Date().toLocaleString())
+// Novo task
+const newTask = ref({
+  title: '',
+  description: '',
+  category: 'geral',
+  hasDependency: false,
+  dependsOnUserEmail: '',
+  dependencyTitle: ''
+})
 
-// Atualizar o tempo a cada segundo
-setInterval(() => {
-  currentTime.value = new Date().toLocaleString()
-}, 1000)
-
-// Carregar tarefas da API
+// Carregar tarefas
 const loadTasks = async () => {
-  loading.value = true
-  error.value = ''
+  tasksLoading.value = true
+  taskError.value = ''
   
   try {
-    const response = await api.getTasks()
-    tasks.value = response.tasks || []
-    console.log('Tarefas carregadas:', tasks.value)
+    const response = await fetch('http://localhost:3000/dev/tasks', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao carregar tarefas')
+    }
+
+    tasks.value = data.tasks || []
   } catch (err) {
-    error.value = err.message || 'Erro ao carregar tarefas'
-    console.error('Erro ao carregar tarefas:', err)
+    taskError.value = err.message || 'Erro ao carregar tarefas'
   } finally {
-    loading.value = false
+    tasksLoading.value = false
   }
 }
 
-// Carregar tarefas quando o componente for montado
-onMounted(() => {
-  loadTasks()
-})
+// Carregar usuários
+const loadUsers = async () => {
+  usersLoading.value = true
+  
+  try {
+    const response = await fetch('http://localhost:3000/dev/users', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    })
 
-// Funções para gerenciar tarefas
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao carregar usuários')
+    }
+
+    users.value = data.users || []
+  } catch (err) {
+    console.error('Erro ao carregar usuários:', err)
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+// Filtrar tarefas por status
 const getTasksByStatus = (status) => {
   return tasks.value.filter(task => task.status === status)
 }
 
+// Verificar se pode mover tarefa
+const canMoveTask = (task, newStatus) => {
+  if (!task.depends_on_task_id || !task.dependency_info) {
+    return true
+  }
+  
+  if (task.status === 'not-started' && newStatus !== 'not-started') {
+    return task.dependency_info.completed === true
+  }
+  
+  return true
+}
+
+// Drag and drop
 const handleDragStart = (event, task) => {
   draggedTask.value = task
   event.dataTransfer.effectAllowed = 'move'
@@ -72,433 +560,126 @@ const handleDrop = async (event, newStatus) => {
   event.preventDefault()
   if (draggedTask.value) {
     try {
-      // Atualizar no backend
-      await api.updateTask(draggedTask.value.id, { status: newStatus })
-      
-      // Atualizar no frontend
-      const taskIndex = tasks.value.findIndex(t => t.id === draggedTask.value.id)
-      if (taskIndex !== -1) {
-        tasks.value[taskIndex].status = newStatus
+      if (!canMoveTask(draggedTask.value, newStatus)) {
+        const dependencyInfo = draggedTask.value.dependency_info
+        taskError.value = `Esta tarefa depende de "${dependencyInfo.task_title}" (${dependencyInfo.user_name}). Aguarde a conclusão da tarefa dependente.`
+        draggedTask.value = null
+        return
       }
+
+      const response = await fetch(`http://localhost:3000/dev/tasks/${draggedTask.value.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          status: newStatus
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar tarefa')
+      }
+
+      await loadTasks()
       
-      console.log('Tarefa atualizada:', draggedTask.value.id, 'para', newStatus)
     } catch (err) {
-      error.value = err.message || 'Erro ao atualizar tarefa'
-      console.error('Erro ao atualizar tarefa:', err)
+      taskError.value = err.message || 'Erro ao atualizar tarefa'
     }
     
     draggedTask.value = null
   }
 }
 
-const getPriorityColor = (priority) => {
-  switch (priority) {
-    case 'high': return 'bg-red-500'
-    case 'medium': return 'bg-yellow-500'
-    case 'low': return 'bg-green-500'
-    default: return 'bg-gray-500'
-  }
-}
-
-const getStatusTitle = (status) => {
-  switch (status) {
-    case 'not-started': return 'Não Iniciadas'
-    case 'in-progress': return 'Em Progresso'
-    case 'pending': return 'Pendentes'
-    case 'completed': return 'Concluídas'
-    default: return 'Outras'
-  }
-}
-
+// Adicionar nova tarefa
 const addNewTask = async () => {
-  if (newTask.value.title.trim()) {
-    try {
-      const response = await api.createTask({
-        title: newTask.value.title.trim(),
-        description: newTask.value.description.trim(),
-        status: 'not-started'
-      })
-      
-      // Adicionar a nova tarefa à lista
-      tasks.value.push(response.task)
-      
-      // Limpar o formulário
-      newTask.value = { title: '', description: '', priority: 'medium' }
-      showAddTaskModal.value = false
-      
-      console.log('Nova tarefa criada:', response.task)
-    } catch (err) {
-      error.value = err.message || 'Erro ao criar tarefa'
-      console.error('Erro ao criar tarefa:', err)
+  if (!newTask.value.title) return
+
+  taskLoading.value = true
+  
+  try {
+    const taskData = {
+      title: newTask.value.title,
+      description: newTask.value.description,
+      category: newTask.value.category,
+      status: 'not-started'
+    }
+
+    if (newTask.value.hasDependency) {
+      taskData.depends_on_user_email = newTask.value.dependsOnUserEmail
+      taskData.dependency_title = newTask.value.dependencyTitle
+    }
+
+    const response = await fetch('http://localhost:3000/dev/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify(taskData)
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao criar tarefa')
+    }
+
+    await loadTasks()
+    
+    // Limpar formulário
+    newTask.value = {
+      title: '',
+      description: '',
+      category: 'geral',
+      hasDependency: false,
+      dependsOnUserEmail: '',
+      dependencyTitle: ''
+    }
+    
+    showAddTaskModal.value = false
+    
+  } catch (err) {
+    taskError.value = err.message || 'Erro ao criar tarefa'
+  } finally {
+    taskLoading.value = false
+  }
+}
+
+// Deletar tarefa
+const deleteTask = async (taskId) => {
+  if (!confirm('Tem certeza que deseja deletar esta tarefa?')) return
+
+  try {
+    const response = await fetch(`http://localhost:3000/dev/tasks/${taskId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('Erro ao deletar tarefa')
+    }
+
+    await loadTasks()
+    
+  } catch (err) {
+    taskError.value = err.message || 'Erro ao deletar tarefa'
+  }
+}
+
+// Toggle lista de usuários
+const toggleUsersList = () => {
+    showUsersList.value = !showUsersList.value
+    if (showUsersList.value && users.value.length === 0) {
+      loadUsers()
     }
   }
-}
 
-const deleteTask = async (taskId) => {
-  try {
-    await api.deleteTask(taskId)
-    tasks.value = tasks.value.filter(task => task.id !== taskId)
-    console.log('Tarefa deletada:', taskId)
-  } catch (err) {
-    error.value = err.message || 'Erro ao deletar tarefa'
-    console.error('Erro ao deletar tarefa:', err)
-  }
-}
-
-// Função de logout
-const handleLogout = () => {
-  emit('logout')
-}
+  // Carregar dados iniciais
+  onMounted(() => {
+    loadTasks()
+  })
 </script>
-
-<template>
-  <div class="min-h-screen bg-background">
-    <!-- Header -->
-    <header class="bg-background-light shadow-sm border-b border-background-lighter">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center py-4">
-          <div class="flex items-center">
-            <h1 class="text-2xl font-bold text-text-primary">Gerenciamento de Tarefas</h1>
-          </div>
-          <div class="flex items-center space-x-4">
-            <button
-              @click="showAddTaskModal = true"
-              class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-hover transition-colors flex items-center space-x-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              <span>Nova Tarefa</span>
-            </button>
-            <span class="text-sm text-text-secondary">{{ currentTime }}</span>
-            <button
-              @click="handleLogout"
-              class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-            >
-              Sair
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-6 sm:px-0">
-        <!-- Mensagem de erro -->
-        <div v-if="error" class="mb-6 bg-red-900/20 border border-red-600/30 rounded-lg p-4">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-            </svg>
-            <span class="text-red-400">{{ error }}</span>
-          </div>
-        </div>
-
-        <!-- Loading -->
-        <div v-if="loading" class="mb-6 text-center">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span class="ml-2 text-text-secondary">Carregando tarefas...</span>
-        </div>
-
-        <!-- Welcome Card -->
-        <div class="bg-background-light rounded-lg shadow p-6 mb-6 border border-background-lighter">
-          <h2 class="text-xl font-semibold text-text-primary mb-2">
-            Bem-vindo, {{ props.user.name || props.user.email }}!
-          </h2>
-          <p class="text-text-secondary">
-            Gerencie suas tarefas arrastando-as entre as colunas
-          </p>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div class="bg-background-light rounded-lg shadow p-6 border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Não Iniciadas</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTasksByStatus('not-started').length }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg shadow p-6 border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                  </svg>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Em Progresso</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTasksByStatus('in-progress').length }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg shadow p-6 border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Pendentes</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTasksByStatus('pending').length }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg shadow p-6 border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Concluídas</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTasksByStatus('completed').length }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Kanban Board -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <!-- Não Iniciadas -->
-          <div class="bg-background-light rounded-lg shadow border border-background-lighter">
-            <div class="p-4 border-b border-background-lighter">
-              <h3 class="text-lg font-medium text-text-primary flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                Não Iniciadas
-              </h3>
-            </div>
-            <div 
-              class="p-4 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'not-started')"
-            >
-              <div
-                v-for="task in getTasksByStatus('not-started')"
-                :key="task.id"
-                class="mb-3 p-3 bg-background-lighter rounded-lg border border-background-lighter hover:border-primary/50 cursor-move transition-colors"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="text-sm font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-                <p class="text-xs text-text-secondary mb-2">{{ task.description }}</p>
-                <div class="flex items-center justify-between">
-                  <span :class="getPriorityColor(task.priority)" class="px-2 py-1 rounded-full text-xs text-white">
-                    {{ task.priority }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Em Progresso -->
-          <div class="bg-background-light rounded-lg shadow border border-background-lighter">
-            <div class="p-4 border-b border-background-lighter">
-              <h3 class="text-lg font-medium text-text-primary flex items-center">
-                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-                Em Progresso
-              </h3>
-            </div>
-            <div 
-              class="p-4 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'in-progress')"
-            >
-              <div
-                v-for="task in getTasksByStatus('in-progress')"
-                :key="task.id"
-                class="mb-3 p-3 bg-background-lighter rounded-lg border border-background-lighter hover:border-primary/50 cursor-move transition-colors"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="text-sm font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-                <p class="text-xs text-text-secondary mb-2">{{ task.description }}</p>
-                <div class="flex items-center justify-between">
-                  <span :class="getPriorityColor(task.priority)" class="px-2 py-1 rounded-full text-xs text-white">
-                    {{ task.priority }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pendentes -->
-          <div class="bg-background-light rounded-lg shadow border border-background-lighter">
-            <div class="p-4 border-b border-background-lighter">
-              <h3 class="text-lg font-medium text-text-primary flex items-center">
-                <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-                Pendentes
-              </h3>
-            </div>
-            <div 
-              class="p-4 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'pending')"
-            >
-              <div
-                v-for="task in getTasksByStatus('pending')"
-                :key="task.id"
-                class="mb-3 p-3 bg-background-lighter rounded-lg border border-background-lighter hover:border-primary/50 cursor-move transition-colors"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="text-sm font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-                <p class="text-xs text-text-secondary mb-2">{{ task.description }}</p>
-                <div class="flex items-center justify-between">
-                  <span :class="getPriorityColor(task.priority)" class="px-2 py-1 rounded-full text-xs text-white">
-                    {{ task.priority }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Concluídas -->
-          <div class="bg-background-light rounded-lg shadow border border-background-lighter">
-            <div class="p-4 border-b border-background-lighter">
-              <h3 class="text-lg font-medium text-text-primary flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                Concluídas
-              </h3>
-            </div>
-            <div 
-              class="p-4 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'completed')"
-            >
-              <div
-                v-for="task in getTasksByStatus('completed')"
-                :key="task.id"
-                class="mb-3 p-3 bg-background-lighter rounded-lg border border-background-lighter hover:border-primary/50 cursor-move transition-colors opacity-75"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="text-sm font-medium text-text-primary line-through">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 transition-colors"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
-                </div>
-                <p class="text-xs text-text-secondary mb-2 line-through">{{ task.description }}</p>
-                <div class="flex items-center justify-between">
-                  <span :class="getPriorityColor(task.priority)" class="px-2 py-1 rounded-full text-xs text-white">
-                    {{ task.priority }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Modal para adicionar nova tarefa -->
-    <div v-if="showAddTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-background-light rounded-lg p-6 w-full max-w-md mx-4 border border-background-lighter">
-        <h3 class="text-lg font-medium text-text-primary mb-4">Nova Tarefa</h3>
-        <form @submit.prevent="addNewTask" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-1">Título</label>
-            <input
-              v-model="newTask.title"
-              type="text"
-              required
-              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
-              placeholder="Digite o título da tarefa"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
-            <textarea
-              v-model="newTask.description"
-              rows="3"
-              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
-              placeholder="Digite a descrição da tarefa"
-            ></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-text-secondary mb-1">Prioridade</label>
-            <select
-              v-model="newTask.priority"
-              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary"
-            >
-              <option value="low">Baixa</option>
-              <option value="medium">Média</option>
-              <option value="high">Alta</option>
-            </select>
-          </div>
-          <div class="flex justify-end space-x-3">
-            <button
-              type="button"
-              @click="showAddTaskModal = false"
-              class="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors"
-            >
-              Adicionar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</template>

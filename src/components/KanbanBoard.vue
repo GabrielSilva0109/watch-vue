@@ -5,9 +5,12 @@
       :key="status"
       :status="status"
       :tasks="getTasksByStatus(status)"
+      :updating-tasks="updatingTasks"
+      :deleting-tasks="deletingTasks"
       @dragstart="handleDragStart"
       @delete="handleDelete"
       @drop="handleDrop"
+      @edit="handleEdit"
     />
   </div>
 </template>
@@ -20,10 +23,18 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  updatingTasks: {
+    type: Array,
+    default: () => []
+  },
+  deletingTasks: {
+    type: Array,
+    default: () => []
   }
 })
 
-const emit = defineEmits(['dragstart', 'delete', 'drop'])
+const emit = defineEmits(['dragstart', 'delete', 'drop', 'edit'])
 
 // Status das colunas do Kanban
 const statuses = ['not-started', 'in-progress', 'pending', 'completed']
@@ -35,7 +46,6 @@ const getTasksByStatus = (status) => {
   }
   
   return props.tasks.filter(task => {
-    // Verificar se a tarefa existe e tem a propriedade status
     return task && task.status === status
   })
 }
@@ -51,5 +61,9 @@ const handleDelete = (taskId) => {
 
 const handleDrop = (event, status) => {
   emit('drop', event, status)
+}
+
+const handleEdit = (task) => {
+  emit('edit', task)
 }
 </script>

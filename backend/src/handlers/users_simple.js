@@ -85,4 +85,32 @@ module.exports.getUserStats = async (event) => {
   }
 };
 
+module.exports.getUserByEmail = async (event) => {
+  try {
+    const email = event.queryStringParameters?.email;
+
+    if (!email) {
+      return response(400, { error: 'Email é obrigatório' });
+    }
+
+    const user = await db('users')
+      .select('id', 'name', 'email', 'created_at')
+      .where('email', email)
+      .first();
+
+    if (!user) {
+      return response(404, { error: 'Usuário não encontrado' });
+    }
+
+    return response(200, {
+      success: true,
+      user
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao buscar usuário por email:', error);
+    return response(500, { error: 'Erro interno do servidor: ' + error.message });
+  }
+};
+
 

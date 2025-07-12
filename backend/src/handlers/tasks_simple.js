@@ -166,8 +166,6 @@ module.exports.createTask = async (event) => {
       })
       .returning('*');
 
-    console.log('✅ Tarefa criada para o usuário:', user.email, task);
-    
     const result = {
       success: true,
       task,

@@ -67,174 +67,13 @@
         <!-- Kanban Board -->
         <KanbanBoard
           :tasks="tasks"
+          :updating-tasks="updatingTasks"
+          :deleting-tasks="deletingTasks"
           @dragstart="handleDragStart"
           @delete="deleteTask"
           @drop="handleDrop"
+          @edit="handleEditTask"
         />
-
-        <!-- Kanban Board -->
-        <!-- <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          Não Iniciadas
-          <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
-            <h3 class="font-semibold text-text-primary mb-4 flex items-center">
-              <span class="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>
-              Não Iniciadas ({{ getTasksByStatus('not-started').length }})
-            </h3>
-            <div
-              class="space-y-3 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'not-started')"
-            >
-              <div
-                v-for="task in getTasksByStatus('not-started')"
-                :key="task.id"
-                class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 ml-2"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
-                
-                <div class="flex items-center mb-2">
-                  <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                    {{ task.category || 'Geral' }}
-                  </span>
-                </div>
-                
-                <div v-if="task.depends_on_task_id && task.dependency_info" class="mt-2 p-2 bg-red-900/20 border border-red-600/30 rounded">
-                  <p class="text-xs text-red-400">
-                    <strong>Depende de:</strong> {{ task.dependency_info.task_title }}
-                  </p>
-                  <p class="text-xs text-red-400">
-                    <strong>Usuário:</strong> {{ task.dependency_info.user_name }}
-                  </p>
-                  <p class="text-xs text-red-400">
-                    <strong>Status:</strong> {{ task.dependency_info.completed ? '✅ Concluída' : '⏳ Pendente' }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
-            <h3 class="font-semibold text-text-primary mb-4 flex items-center">
-              <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-              Em Progresso ({{ getTasksByStatus('in-progress').length }})
-            </h3>
-            <div
-              class="space-y-3 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'in-progress')"
-            >
-              <div
-                v-for="task in getTasksByStatus('in-progress')"
-                :key="task.id"
-                class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 ml-2"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
-                
-                <div class="flex items-center mb-2">
-                  <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                    {{ task.category || 'Geral' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
-            <h3 class="font-semibold text-text-primary mb-4 flex items-center">
-              <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
-              Pendentes ({{ getTasksByStatus('pending').length }})
-            </h3>
-            <div
-              class="space-y-3 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'pending')"
-            >
-              <div
-                v-for="task in getTasksByStatus('pending')"
-                :key="task.id"
-                class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="font-medium text-text-primary">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 ml-2"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
-                
-                <div class="flex items-center mb-2">
-                  <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                    {{ task.category || 'Geral' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
-            <h3 class="font-semibold text-text-primary mb-4 flex items-center">
-              <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-              Concluídas ({{ getTasksByStatus('completed').length }})
-            </h3>
-            <div
-              class="space-y-3 min-h-[400px]"
-              @dragover="handleDragOver"
-              @drop="handleDrop($event, 'completed')"
-            >
-              <div
-                v-for="task in getTasksByStatus('completed')"
-                :key="task.id"
-                class="bg-background p-4 rounded-lg border border-background-lighter cursor-move"
-                draggable="true"
-                @dragstart="handleDragStart($event, task)"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <h4 class="font-medium text-text-primary line-through opacity-75">{{ task.title }}</h4>
-                  <button
-                    @click="deleteTask(task.id)"
-                    class="text-red-400 hover:text-red-300 ml-2"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <p class="text-sm text-text-secondary mb-2 line-through opacity-75">{{ task.description }}</p>
-                
-                <div class="flex items-center mb-2">
-                  <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded opacity-75">
-                    {{ task.category || 'Geral' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </div>
 
       <!-- Tab Content: Usuários -->
@@ -388,15 +227,17 @@
     <CreateTaskModal 
       :is-visible="showAddTaskModal"
       :is-loading="taskLoading"
-      @close="showAddTaskModal = false"
-      @submit="addNewTask"
+      :editing-task="editingTask"
+      :users="users"
+      @close="closeTaskModal"
+      @submit="handleTaskSubmit"
     />
   </div>
 </template>
 
 <script setup>
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Header from './Header.vue'
 import CreateTaskModal from './CreateTaskModal.vue'
 import StatsCard from './StatsCard.vue'
@@ -421,6 +262,106 @@ const usersLoading = ref(false)
 const taskLoading = ref(false)
 const taskError = ref('')
 const draggedTask = ref(null)
+const editingTask = ref(null)
+
+// Estados de loading para operações específicas
+const updatingTasks = ref([])
+const deletingTasks = ref([])
+
+const isEditingTask = computed(() => editingTask.value !== null)
+
+const openEditModal = (task) => {
+  editingTask.value = task
+  showAddTaskModal.value = true
+}
+
+// Função para fechar modal
+const closeTaskModal = () => {
+  showAddTaskModal.value = false
+  editingTask.value = null
+}
+
+// Handler para edição de tarefa
+const handleEditTask = (task) => {
+  openEditModal(task)
+}
+// Adicionar/Editar tarefa
+const handleTaskSubmit = async (taskData) => {
+  taskLoading.value = true
+  
+  try {
+    const isEditing = editingTask.value !== null
+    
+    if (isEditing) {
+      // Edição simples - não permite alterar dependência
+      const url = `http://localhost:3000/dev/tasks/${editingTask.value.id}`
+      
+      const dataToSend = {
+        title: taskData.title,
+        description: taskData.description,
+        category: taskData.category,
+        status: taskData.status
+      }
+      
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(dataToSend)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao atualizar tarefa')
+      }
+    } else {
+      // Criação nova - igual à função antiga
+      const taskDataToSend = {
+        title: taskData.title,
+        description: taskData.description,
+        category: taskData.category,
+        status: 'not-started'
+      }
+
+      // Adicionar dados de dependência se existirem
+      if (taskData.depends_on_user_email && taskData.dependency_title) {
+        taskDataToSend.depends_on_user_email = taskData.depends_on_user_email
+        taskDataToSend.dependency_title = taskData.dependency_title
+      }
+
+      console.log('📤 Dados enviados para o backend:', taskDataToSend)
+
+      const response = await fetch('http://localhost:3000/dev/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(taskDataToSend)
+      })
+
+      const data = await response.json()
+      console.log('📥 Resposta do backend:', data)
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao criar tarefa')
+      }
+    }
+
+    await loadTasks()
+    await loadUsers()
+    closeTaskModal()
+    
+  } catch (err) {
+    console.error('Erro completo:', err)
+    taskError.value = err.message || `Erro ao ${editingTask.value ? 'atualizar' : 'criar'} tarefa`
+  } finally {
+    taskLoading.value = false
+  }
+}
 
 // Função para tratar mudança de aba
 const handleTabChange = (tab) => {
@@ -442,6 +383,8 @@ const loadTasks = async () => {
     })
 
     const data = await response.json()
+
+    console.log('Dados recebidos:', data)
 
     if (!response.ok) {
       throw new Error(data.message || 'Erro ao carregar tarefas')
@@ -538,18 +481,14 @@ const handleDragStart = (event, task) => {
   event.dataTransfer.effectAllowed = 'move'
 }
 
-const handleDragOver = (event) => {
-  event.preventDefault()
-  event.dataTransfer.dropEffect = 'move'
-}
-
 const handleDrop = async (event, newStatus) => {
   event.preventDefault()
   if (draggedTask.value) {
+    updatingTasks.value.push(draggedTask.value.id)
     try {
       if (!canMoveTask(draggedTask.value, newStatus)) {
         const dependencyInfo = draggedTask.value.dependency_info
-        taskError.value = `Esta tarefa depende de "${dependencyInfo.task_title}" (${dependencyInfo.user_name}). Aguarde a conclusão da tarefa dependente.`
+        taskError.value = `Esta tarefa sds de "${dependencyInfo.task_title}" (${dependencyInfo.user_name}). Aguarde a conclusão da tarefa dependente.`
         draggedTask.value = null
         return
       }
@@ -574,44 +513,16 @@ const handleDrop = async (event, newStatus) => {
     } catch (err) {
       taskError.value = err.message || 'Erro ao atualizar tarefa'
     }
-    
+    updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
     draggedTask.value = null
-  }
-}
-
-// Adicionar nova tarefa
-const addNewTask = async (taskData) => {
-  taskLoading.value = true
-  
-  try {
-    const response = await fetch('http://localhost:3000/dev/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-      },
-      body: JSON.stringify(taskData)
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao criar tarefa')
-    }
-
-    await loadTasks()
-    showAddTaskModal.value = false
-    
-  } catch (err) {
-    taskError.value = err.message || 'Erro ao criar tarefa'
-  } finally {
-    taskLoading.value = false
   }
 }
 
 // Deletar tarefa
 const deleteTask = async (taskId) => {
   if (!confirm('Tem certeza que deseja deletar esta tarefa?')) return
+
+  deletingTasks.value.push(taskId)
 
   try {
     const response = await fetch(`http://localhost:3000/dev/tasks/${taskId}`, {
@@ -629,6 +540,8 @@ const deleteTask = async (taskId) => {
     
   } catch (err) {
     taskError.value = err.message || 'Erro ao deletar tarefa'
+  } finally {
+    deletingTasks.value = deletingTasks.value.filter(id => id !== taskId)
   }
 }
 
@@ -636,23 +549,6 @@ const deleteTask = async (taskId) => {
 const getTotalTasks = () => {
   if (users.value.length === 0) return tasks.value.length
   return users.value.reduce((total, user) => total + (user.stats?.total || 0), 0)
-}
-
-const getCompletionRate = () => {
-  const total = getTotalTasks()
-  if (total === 0) return 0
-  
-  if (users.value.length === 0) {
-    const completed = tasks.value.filter(task => task.status === 'completed').length
-    return Math.round((completed / total) * 100)
-  }
-  
-  const completed = users.value.reduce((sum, user) => sum + (user.stats?.completed || 0), 0)
-  return Math.round((completed / total) * 100)
-}
-
-const getTasksWithDependencies = () => {
-  return tasks.value.filter(task => task.depends_on_task_id).length
 }
 
 const getMostActiveUsers = () => {
@@ -675,7 +571,6 @@ const getCategoryDistribution = () => {
     .sort((a, b) => b.count - a.count)
 }
 
-// Carregar dados iniciais
 onMounted(() => {
   loadTasks()
   loadUsers()

@@ -24,61 +24,33 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-sm">📋</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Total</p>
-                <p class="text-2xl font-semibold text-text-primary">{{ tasks.length }}</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Total"
+            :value="tasks.length"
+            icon="📋"
+            icon-bg-class="bg-blue-500"
+          />
+
+          <StatsCard 
+            title="Não Iniciadas"
+            :value="getTasksByStatus('not-started').length"
+            icon="⏳"
+            icon-bg-class="bg-yellow-500"
+          />
+
+          <StatsCard 
+            title="Em Progresso"
+            :value="getTasksByStatus('in-progress').length"
+            icon="🔄"
+            icon-bg-class="bg-blue-500"
+          />
           
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-sm">⏳</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Não Iniciadas</p>
-                <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('not-started').length }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-sm">🔄</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Em Progresso</p>
-                <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('in-progress').length }}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-sm">✅</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Concluídas</p>
-                <p class="text-2xl font-semibold text-text-primary">{{ getTasksByStatus('completed').length }}</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Concluídas"
+            :value="getTasksByStatus('completed').length"
+            icon="✅"
+            icon-bg-class="bg-green-500"
+          />
         </div>
 
         <!-- Task Error -->
@@ -93,8 +65,16 @@
         </div>
 
         <!-- Kanban Board -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <!-- Não Iniciadas -->
+        <KanbanBoard
+          :tasks="tasks"
+          @dragstart="handleDragStart"
+          @delete="deleteTask"
+          @drop="handleDrop"
+        />
+
+        <!-- Kanban Board -->
+        <!-- <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          Não Iniciadas
           <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
             <h3 class="font-semibold text-text-primary mb-4 flex items-center">
               <span class="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>
@@ -123,14 +103,12 @@
                 </div>
                 <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
                 
-                <!-- Categoria -->
                 <div class="flex items-center mb-2">
                   <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
                     {{ task.category || 'Geral' }}
                   </span>
                 </div>
                 
-                <!-- Dependência -->
                 <div v-if="task.depends_on_task_id && task.dependency_info" class="mt-2 p-2 bg-red-900/20 border border-red-600/30 rounded">
                   <p class="text-xs text-red-400">
                     <strong>Depende de:</strong> {{ task.dependency_info.task_title }}
@@ -146,7 +124,6 @@
             </div>
           </div>
 
-          <!-- Em Progresso -->
           <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
             <h3 class="font-semibold text-text-primary mb-4 flex items-center">
               <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
@@ -175,7 +152,6 @@
                 </div>
                 <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
                 
-                <!-- Categoria -->
                 <div class="flex items-center mb-2">
                   <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
                     {{ task.category || 'Geral' }}
@@ -185,7 +161,6 @@
             </div>
           </div>
 
-          <!-- Pendentes -->
           <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
             <h3 class="font-semibold text-text-primary mb-4 flex items-center">
               <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
@@ -214,7 +189,6 @@
                 </div>
                 <p class="text-sm text-text-secondary mb-2">{{ task.description }}</p>
                 
-                <!-- Categoria -->
                 <div class="flex items-center mb-2">
                   <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
                     {{ task.category || 'Geral' }}
@@ -224,7 +198,6 @@
             </div>
           </div>
 
-          <!-- Concluídas -->
           <div class="bg-background-light rounded-lg p-4 border border-background-lighter">
             <h3 class="font-semibold text-text-primary mb-4 flex items-center">
               <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
@@ -253,7 +226,6 @@
                 </div>
                 <p class="text-sm text-text-secondary mb-2 line-through opacity-75">{{ task.description }}</p>
                 
-                <!-- Categoria -->
                 <div class="flex items-center mb-2">
                   <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded opacity-75">
                     {{ task.category || 'Geral' }}
@@ -262,7 +234,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Tab Content: Usuários -->
@@ -343,61 +315,33 @@
 
         <!-- Estatísticas Gerais -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-lg">👥</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Total de Usuários</p>
-                <p class="text-2xl font-bold text-text-primary">{{ users.length }}</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Total de Usuários"
+            :value="users.length"
+            icon="👥"
+            icon-bg-class="bg-blue-500"
+          />
 
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-lg">📊</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Total de Tarefas</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTotalTasks() }}</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Total de Tarefas"
+            :value="getTotalTasks()"
+            icon="📊"
+            icon-bg-class="bg-green-500"
+          />
 
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-lg">⚡</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Taxa de Conclusão</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getCompletionRate() }}%</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Tarefas Pendentes"
+            :value="getTasksByStatus('pending').length"
+            icon="⏳"
+            icon-bg-class="bg-yellow-500"
+          />
 
-          <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
-                  <span class="text-white text-lg">🔗</span>
-                </div>
-              </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-text-secondary">Tarefas com Dependências</p>
-                <p class="text-2xl font-bold text-text-primary">{{ getTasksWithDependencies() }}</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            title="Tarefas Concluídas"
+            :value="getTasksByStatus('completed').length"
+            icon="✅"
+            icon-bg-class="bg-green-500"
+          />
         </div>
 
         <!-- Gráficos e Análises -->
@@ -423,7 +367,7 @@
             <h3 class="text-lg font-semibold text-text-primary mb-4">Tarefas por Categoria</h3>
             <div class="space-y-3">
               <div v-for="category in getCategoryDistribution()" :key="category.name" class="flex items-center justify-between">
-                <span class="text-text-primary">{{ category.name }}</span>
+                <span class="text-text-primary">{{ category.name.charAt(0).toUpperCase() + category.name.slice(1) }}</span>
                 <div class="flex items-center">
                   <div class="w-20 h-2 bg-background-lighter rounded-full mr-3">
                     <div 
@@ -451,9 +395,12 @@
 </template>
 
 <script setup>
+
 import { ref, onMounted } from 'vue'
 import Header from './Header.vue'
 import CreateTaskModal from './CreateTaskModal.vue'
+import StatsCard from './StatsCard.vue'
+import KanbanBoard from './KanbanBoard.vue'
 
 const props = defineProps({
   user: {
@@ -479,16 +426,6 @@ const draggedTask = ref(null)
 const handleTabChange = (tab) => {
   activeTab.value = tab
 }
-
-// Novo task
-const newTask = ref({
-  title: '',
-  description: '',
-  category: 'geral',
-  hasDependency: false,
-  dependsOnUserEmail: '',
-  dependencyTitle: ''
-})
 
 // Carregar tarefas
 const loadTasks = async () => {

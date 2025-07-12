@@ -4,19 +4,25 @@ const { response } = require('../utils/response');
 // Listar todos os usuários
 module.exports.getUsers = async (event) => {
   try {
-    console.log('🔍 Buscando todos os usuários...');
-    
     // Buscar todos os usuários
     const users = await db('users')
       .select('id', 'name', 'email', 'created_at')
       .orderBy('created_at', 'desc');
 
-    console.log('✅ Usuários encontrados:', users.length);
+    // Buscar todas as tasks dos usuários
+    const tasks = await db('tasks')
+      .select('id', 'title', 'status', 'user_id', 'created_at');
+
+    // Mapear tasks para cada usuário
+    const usersWithTasks = users.map(user => ({
+      ...user,
+      tasks: tasks.filter(task => task.user_id === user.id)
+    }));
 
     return response(200, {
       success: true,
-      users: users,
-      count: users.length
+      users: usersWithTasks,
+      count: usersWithTasks.length
     });
 
   } catch (error) {
@@ -33,8 +39,6 @@ module.exports.getUserStats = async (event) => {
     if (!userId) {
       return response(400, { error: 'ID do usuário é obrigatório' });
     }
-
-    console.log('🔍 Buscando estatísticas do usuário:', userId);
 
     // Buscar usuário
     const user = await db('users')
@@ -66,8 +70,6 @@ module.exports.getUserStats = async (event) => {
 
     const totalTasks = Object.values(stats).reduce((sum, count) => sum + count, 0);
 
-    console.log('✅ Estatísticas do usuário encontradas:', { user: user.name, stats });
-
     return response(200, {
       success: true,
       user: user,
@@ -82,3 +84,5 @@ module.exports.getUserStats = async (event) => {
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
+
+

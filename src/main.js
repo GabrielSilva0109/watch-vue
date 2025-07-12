@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
 import './style.css'
-import SimpleLanding from './SimpleLanding.vue'
+import App from './App.vue'
 
-createApp(SimpleLanding).mount('#app')
+createApp(App).mount('#app')

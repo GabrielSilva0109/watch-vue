@@ -24,6 +24,7 @@
     <Dashboard v-if="currentView === 'dashboard'"
       :user="user"
       @logout="handleLogout"
+      @user-update="handleUserUpdate"
     />
 
     <!-- Loading Modal -->
@@ -38,16 +39,27 @@
 import { ref, onMounted } from 'vue'
 import LoginPage from './pages/Login.vue'
 import RegisterPage from './pages/Register.vue'
-import Dashboard from './components/Dashboard.vue'
+import Dashboard from './pages/Dashboard.vue'
 import LoadingModal from './components/LoadingModal.vue'
 import ErrorModal from './components/ErrorModal.vue'
 import LandingPage from './pages/LandingApp.vue'
 
 // Estados da aplicação
 const currentView = ref('landing')
-const user = ref(null)
+const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 const loading = ref(false)
 const error = ref('')
+
+function handleUserUpdate(updatedUserData) {
+  // Atualizar o objeto user local
+  user.value = {
+    ...user.value,
+    ...updatedUserData
+  }
+  
+  // Atualizar no localStorage
+  localStorage.setItem('user', JSON.stringify(user.value))
+}
 
 // Funções para alternar entre telas
 const switchToLanding = () => {

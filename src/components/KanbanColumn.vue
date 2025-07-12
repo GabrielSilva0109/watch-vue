@@ -17,14 +17,18 @@
         v-for="task in tasks"
         :key="task.id"
         :task="task"
+        :is-updating="updatingTasks.includes(task.id)"
+        :is-deleting="deletingTasks.includes(task.id)"
         @dragstart="$emit('dragstart', $event, task)"
         @delete="$emit('delete', $event)"
+        @edit="$emit('edit', $event)"
       />
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import TaskCard from './TaskCard.vue'
 
 const props = defineProps({
@@ -36,10 +40,18 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  updatingTasks: {
+    type: Array,
+    default: () => []
+  },
+  deletingTasks: {
+    type: Array,
+    default: () => []
   }
 })
 
-const emit = defineEmits(['dragstart', 'delete', 'drop'])
+const emit = defineEmits(['dragstart', 'delete', 'drop', 'edit'])
 
 // Configurações para cada status
 const statusConfigs = {
@@ -60,9 +72,6 @@ const statusConfigs = {
     color: 'bg-green-500'
   }
 }
-
-// Usar computed para garantir que sempre temos uma configuração válida
-import { computed } from 'vue'
 
 const statusConfig = computed(() => {
   return statusConfigs[props.status] || statusConfigs['not-started']

@@ -229,6 +229,7 @@
       :is-loading="taskLoading"
       :editing-task="editingTask"
       :users="users"
+      :current-user="user"
       @close="closeTaskModal"
       @submit="handleTaskSubmit"
     />

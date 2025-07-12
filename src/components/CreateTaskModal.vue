@@ -76,15 +76,22 @@
         <div v-if="formData.hasDependency && !isEditing" class="space-y-3 p-3 bg-background rounded border border-background-lighter">
           <div>
             <label class="block text-text-primary text-sm font-medium mb-1">
-              Email do usuário
+              Selecione o usuário
             </label>
-            <input
-              v-model="formData.dependsOnUserEmail"
-              type="email"
+            <select
+              v-model="formData.selectedUserId"
               required
-              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="email@exemplo.com"
-            />
+              class="w-full px-3 py-2 bg-background-lighter border border-background-lighter rounded-md text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="">Selecione um usuário</option>
+              <option 
+                v-for="user in availableUsers" 
+                :key="user.id" 
+                :value="user.id"
+              >
+                {{ user.name }} ({{ user.email }})
+              </option>
+            </select>
           </div>
           
           <div>
@@ -137,6 +144,14 @@ const props = defineProps({
   editingTask: {
     type: Object,
     default: null
+  },
+  users: {
+    type: Array,
+    default: () => []
+  },
+  currentUser: {
+    type: Object,
+    default: null
   }
 })
 
@@ -145,6 +160,11 @@ const emit = defineEmits(['close', 'submit'])
 // Computed para verificar se está editando
 const isEditing = computed(() => props.editingTask !== null)
 
+// Computed para filtrar usuários disponíveis (excluir usuário atual)
+const availableUsers = computed(() => {
+  return props.users.filter(user => user.id !== props.currentUser?.id)
+})
+
 // Dados do formulário
 const formData = ref({
   title: '',
@@ -152,7 +172,7 @@ const formData = ref({
   category: 'geral',
   status: 'not-started',
   hasDependency: false,
-  dependsOnUserEmail: '',
+  selectedUserId: '',
   dependencyTitle: ''
 })
 
@@ -164,7 +184,7 @@ const resetForm = () => {
     category: 'geral',
     status: 'not-started',
     hasDependency: false,
-    dependsOnUserEmail: '',
+    selectedUserId: '',
     dependencyTitle: ''
   }
 }
@@ -185,7 +205,7 @@ watch(() => props.editingTask, (task) => {
       category: task.category || 'geral',
       status: task.status || 'not-started',
       hasDependency: false,
-      dependsOnUserEmail: '',
+      selectedUserId: '',
       dependencyTitle: ''
     }
   } else {
@@ -208,8 +228,13 @@ const handleSubmit = () => {
 
   // Adicionar dados de dependência se marcado
   if (formData.value.hasDependency && !isEditing.value) {
-    taskData.depends_on_user_email = formData.value.dependsOnUserEmail.trim()
-    taskData.dependency_title = formData.value.dependencyTitle.trim()
+    // Encontrar o usuário selecionado para pegar o email
+    const selectedUser = props.users.find(user => user.id === formData.value.selectedUserId)
+    
+    if (selectedUser) {
+      taskData.depends_on_user_email = selectedUser.email
+      taskData.dependency_title = formData.value.dependencyTitle.trim()
+    }
   }
 
   console.log('Dados sendo enviados do modal:', taskData)

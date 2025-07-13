@@ -1,5 +1,21 @@
 # Watch Brasil Tasks 
 
+## 🎥 Demonstração do Projeto
+WATCH_TASKS_OMBOARDING.mp4
+
+## 1. Iniciar o projeto 
+
+### 1.1. Backend 
+```bash
+cd backend 
+npx serverless offline start
+```
+
+### 1.2 Frontend 
+```bash
+npm rundev
+```
+
 Backend serverless para a aplicação de gerenciamento de tarefas Watch, construído com Node.js, Vue.js e AWS Lambda.
 
 ## 🏗️ Arquitetura

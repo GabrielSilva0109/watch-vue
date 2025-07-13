@@ -267,6 +267,8 @@ const loadTasks = async () => {
 
     const data = await response.json()
 
+    console.log('Dados de tarefas carregados:', data)
+
     if (!response.ok) {
       throw new Error(data.message || 'Erro ao carregar tarefas')
     }

@@ -1,12 +1,12 @@
 # Watch Vue Backend - Serverless
 
-Backend serverless para a aplicação de gerenciamento de tarefas Watch, construído com Node.js, Vue.js e AWS Lambda .
+Backend serverless para a aplicação de gerenciamento de tarefas Watch, construído com Node.js, Vue.js e AWS Lambda.
 
 ## 🏗️ Arquitetura
 
 - **AWS Lambda** - Funções serverless
 - **API Gateway** - Endpoints REST
-- **PostsgGREE** - Banco de dados NoSQL
+- **PostgreSQL** - Banco de dados relacional
 - **JWT** - Autenticação e autorização
 - **Serverless Framework** - Deploy e gerenciamento
 
@@ -44,14 +44,12 @@ cp .env.example .env
 # Editar o arquivo .env
 JWT_SECRET=sua-chave-secreta-muito-forte-aqui
 AWS_REGION=us-east-1
+DATABASE_URL=postgresql://user:password@localhost:5432/watchdb
 ```
 
 ## 📝 Desenvolvimento Local
 
 ```bash
-# Instalar plugin offline
-npm install --save-dev serverless-offline
-
 # Executar localmente
 npm run local
 ```
@@ -82,7 +80,11 @@ npm run remove
 
 - **POST** `/auth/register` - Registrar usuário
 - **POST** `/auth/login` - Login do usuário
-- **PUT** `/auth/login` - Login do usuário
+- **GET** `/users` - Obter usuários
+- **GET** `/users/{id}/stats` - Obter estatísticas do usuário
+- **PUT** `/users/{id}` - Atualizar usuário
+- **PUT** `/users/{id}` - Atualizar usuário
+- **DELETE** `/users/{id}` - Deletar usuário
 
 ### Tarefas (Requer autenticação)
 
@@ -105,12 +107,12 @@ Authorization: Bearer <seu-token-jwt>
 
 ```json
 {
-  "userId": "uuid",
+  "id": "uuid",
   "email": "string",
   "name": "string",
   "password": "string (hash)",
-  "createdAt": "ISO string",
-  "updatedAt": "ISO string"
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
 }
 ```
 
@@ -118,13 +120,24 @@ Authorization: Bearer <seu-token-jwt>
 
 ```json
 {
-  "userId": "uuid",
-  "taskId": "uuid",
+  "id": "uuid",
+  "user_id": "uuid",
   "title": "string",
   "description": "string",
   "status": "not-started|in-progress|pending|completed",
-  "createdAt": "ISO string",
-  "updatedAt": "ISO string"
+  "category": "string",
+  "depends_on_task_id": "uuid|null",
+  "depends_on_user_id": "uuid|null",
+  "dependency_title": "string|null",
+  "dependency_info": {
+    "task_title": "string",
+    "user_name": "string",
+    "status": "string",
+    "completed": "boolean"
+  },
+  "is_blocked": "boolean",
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
 }
 ```
 
@@ -139,15 +152,31 @@ npm test
 ```
 backend/
 ├── src/
+│   ├── __tests__/handlers
+│   │   └── auth.test.js
+│   ├── config/
+│   │   └── database.js
 │   ├── handlers/
-│   │   ├── auth.js
-│   │   └── tasks.js
+│   │   ├── auth_postgres.js
+│   │   ├── users_simple.js
+│   │   └── tasks_simple.js
 │   └── utils/
 │       └── response.js
 ├── package.json
 ├── serverless.yml
+├── serverless_postgres.yml
+├── serverless-local.yml
 └── .env
+└── exemple.env
 ```
+
+## ⚙️ Configurações Serverless
+
+O projeto possui múltiplas configurações serverless:
+
+- **serverless.yml** - Configuração principal (produção)
+- **serverless_postgres.yml** - Configuração específica PostgreSQL
+- **serverless-local.yml** - Desenvolvimento local
 
 ## 🔧 Configuração do Frontend
 
@@ -163,3 +192,27 @@ const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3000';
 - **CloudWatch** - Logs e métricas
 - **X-Ray** - Rastreamento de requisições
 - **AWS Dashboard** - Monitoramento geral
+
+## 🗄️ Handlers Disponíveis
+
+### Autenticação
+- `auth_postgres.js` - Handlers de autenticação com PostgreSQL
+
+### Tarefas
+- `tasks_simple.js` - Handlers de tarefas simplificados
+
+### Usuários
+- `users_simple.js` - Handlers de tarefas simplificados
+
+## 🚀 Scripts Disponíveis
+
+```bash
+# Desenvolvimento local
+npm run local
+
+# Deploy com PostgreSQL
+npm run deploy
+
+# Remover deployment
+npm run remove
+```

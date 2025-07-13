@@ -125,6 +125,17 @@ Authorization: Bearer <seu-token-jwt>
   "title": "string",
   "description": "string",
   "status": "not-started|in-progress|pending|completed",
+  "category": "string",
+  "depends_on_task_id": "uuid|null",
+  "depends_on_user_id": "uuid|null",
+  "dependency_title": "string|null",
+  "dependency_info": {
+    "task_title": "string",
+    "user_name": "string",
+    "status": "string",
+    "completed": "boolean"
+  },
+  "is_blocked": "boolean",
   "created_at": "timestamp",
   "updated_at": "timestamp"
 }

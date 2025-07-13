@@ -370,6 +370,8 @@ const handleDrop = async (event, newStatus) => {
       if (!canMoveTask(draggedTask.value, newStatus)) {
         const dependencyInfo = draggedTask.value.dependency_info
         taskError.value = `Esta tarefa está bloqueada até que "${dependencyInfo.task_title}" de ${dependencyInfo.user_name} seja concluída. Aguarde a finalização da tarefa dependente.`
+        // Remover o loading antes do return
+        updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
         draggedTask.value = null
         return
       }
@@ -393,9 +395,11 @@ const handleDrop = async (event, newStatus) => {
       
     } catch (err) {
       taskError.value = err.message || 'Erro ao atualizar tarefa'
+    } finally {
+      // Garantir que o loading seja removido em qualquer caso
+      updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
+      draggedTask.value = null
     }
-    updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
-    draggedTask.value = null
   }
 }
 
@@ -424,32 +428,6 @@ const deleteTask = async (taskId) => {
   } finally {
     deletingTasks.value = deletingTasks.value.filter(id => id !== taskId)
   }
-}
-
-// Funções para relatórios
-const getTotalTasks = () => {
-  if (users.value.length === 0) return tasks.value.length
-  return users.value.reduce((total, user) => total + (user.stats?.total || 0), 0)
-}
-
-const getMostActiveUsers = () => {
-  return users.value
-    .filter(user => user.stats && user.stats.total > 0)
-    .sort((a, b) => (b.stats?.total || 0) - (a.stats?.total || 0))
-    .slice(0, 5)
-}
-
-const getCategoryDistribution = () => {
-  const categories = {}
-  
-  tasks.value.forEach(task => {
-    const category = task.category || 'Geral'
-    categories[category] = (categories[category] || 0) + 1
-  })
-  
-  return Object.entries(categories)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
 }
 
 onMounted(() => {

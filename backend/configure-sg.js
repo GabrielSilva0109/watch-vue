@@ -5,8 +5,6 @@ const ec2 = new AWS.EC2({ region: 'us-east-1' });
 
 async function configureSecurityGroup() {
   try {
-    console.log('🔄 Buscando Security Groups do RDS...');
-    
     // Buscar todos os security groups
     const result = await ec2.describeSecurityGroups({
       Filters: [
@@ -18,16 +16,11 @@ async function configureSecurityGroup() {
     }).promise();
 
     if (result.SecurityGroups.length === 0) {
-      console.log('❌ Nenhum Security Group do RDS encontrado');
-      console.log('🔧 Configure manualmente no AWS Console:');
-      console.log('   1. Vá para RDS → Database → database-1');
-      console.log('   2. Clique no Security Group');
-      console.log('   3. Adicione regra: PostgreSQL (5432) de 0.0.0.0/0');
+      console.log('Nenhum Security Group do RDS encontrado');
       return;
     }
 
     const sg = result.SecurityGroups[0];
-    console.log(`✅ Security Group encontrado: ${sg.GroupId}`);
 
     // Verificar se a regra já existe
     const hasPostgresRule = sg.IpPermissions.some(rule => 
@@ -52,12 +45,10 @@ async function configureSecurityGroup() {
       ]
     }).promise();
 
-    console.log('✅ Regra PostgreSQL adicionada com sucesso!');
-    console.log('🔄 Aguarde alguns segundos e teste novamente...');
+    console.log('Regra PostgreSQL adicionada com sucesso!');
 
   } catch (error) {
     console.error('❌ Erro:', error.message);
-    console.log('🔧 Configure manualmente no AWS Console');
   }
 }
 

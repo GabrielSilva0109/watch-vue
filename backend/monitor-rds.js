@@ -3,8 +3,6 @@ const AWS = require('aws-sdk');
 async function monitorRDS() {
   const rds = new AWS.RDS({ region: 'us-east-1' });
   
-  console.log('🔄 Monitorando modificações do RDS...');
-  
   const checkStatus = async () => {
     try {
       const result = await rds.describeDBInstances({
@@ -13,11 +11,7 @@ async function monitorRDS() {
       
       const instance = result.DBInstances[0];
       
-      console.log(`📊 Status: ${instance.DBInstanceStatus} | Público: ${instance.PubliclyAccessible}`);
-      
       if (instance.PubliclyAccessible && instance.DBInstanceStatus === 'available') {
-        console.log('✅ RDS está público e disponível!');
-        console.log('🔄 Testando conexão...');
         
         // Testar conexão
         const { Client } = require('pg');

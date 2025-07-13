@@ -1,12 +1,12 @@
 # Watch Vue Backend - Serverless
 
-Backend serverless para a aplicação de gerenciamento de tarefas Watch Vue, construído com Node.js e AWS Lambda.
+Backend serverless para a aplicação de gerenciamento de tarefas Watch, construído com Node.js, Vue.js e AWS Lambda .
 
 ## 🏗️ Arquitetura
 
 - **AWS Lambda** - Funções serverless
 - **API Gateway** - Endpoints REST
-- **DynamoDB** - Banco de dados NoSQL
+- **PostsgGREE** - Banco de dados NoSQL
 - **JWT** - Autenticação e autorização
 - **Serverless Framework** - Deploy e gerenciamento
 
@@ -82,6 +82,7 @@ npm run remove
 
 - **POST** `/auth/register` - Registrar usuário
 - **POST** `/auth/login` - Login do usuário
+- **PUT** `/auth/login` - Login do usuário
 
 ### Tarefas (Requer autenticação)
 
@@ -121,7 +122,6 @@ Authorization: Bearer <seu-token-jwt>
   "taskId": "uuid",
   "title": "string",
   "description": "string",
-  "priority": "low|medium|high",
   "status": "not-started|in-progress|pending|completed",
   "createdAt": "ISO string",
   "updatedAt": "ISO string"

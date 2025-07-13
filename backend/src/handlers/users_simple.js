@@ -85,6 +85,7 @@ module.exports.getUserStats = async (event) => {
   }
 };
 
+// Obter usuário por email
 module.exports.getUserByEmail = async (event) => {
   try {
     const email = event.queryStringParameters?.email;
@@ -143,6 +144,33 @@ module.exports.editUser = async (event) => {
     });
   } catch (error) {
     console.error('❌ Erro ao editar usuário:', error);
+    return response(500, { error: 'Erro interno do servidor: ' + error.message });
+  }
+};
+
+// Deletar usuário
+module.exports.deleteUser = async (event) => {
+  try {
+    const userId = event.pathParameters?.id;
+    if (!userId) {
+      return response(400, { error: 'ID do usuário é obrigatório' });
+    }
+    const user = await db('users')
+      .select('id')
+      .where('id', userId)
+      .first();
+    if (!user) {
+      return response(404, { error: 'Usuário não encontrado' });
+    }
+    await db('users')
+      .where('id', userId)
+      .del();
+    return response(200, {
+      success: true,
+      message: 'Usuário deletado com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };

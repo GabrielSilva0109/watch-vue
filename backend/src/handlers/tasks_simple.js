@@ -28,33 +28,11 @@ const getUserFromToken = async (event) => {
   }
 };
 
-// Para teste, vamos usar um usuário fixo
-const TEST_USER_ID = 'test-user-id';
-
-// Função para obter usuário de teste
-const getTestUser = async () => {
-  let user = await db('users').where('email', 'teste@exemplo.com').first();
-  if (!user) {
-    // Criar usuário de teste se não existir
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash('123456', 10);
-    
-    [user] = await db('users').insert({
-      email: 'teste@exemplo.com',
-      password: hashedPassword,
-      name: 'Usuário de Teste'
-    }).returning('*');
-  }
-  return user;
-};
-
+// Obter estatísticas do usuário
 module.exports.getTasks = async (event) => {
   try {
-    console.log('🔍 Buscando tarefas...');
-    
     // Obter usuário do token JWT
     const user = await getUserFromToken(event);
-    console.log('👤 Usuário autenticado:', user.email);
     
     const tasks = await db('tasks')
       .where('user_id', user.id)
@@ -86,25 +64,20 @@ module.exports.getTasks = async (event) => {
       })
     );
 
-    console.log('✅ Tarefas encontradas para o usuário:', tasks.length);
-    
     return response(200, {
       success: true,
       tasks: tasksWithDependencies
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar tarefas:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
 
+// Criar nova tarefa
 module.exports.createTask = async (event) => {
   try {
-    console.log('➕ Criando nova tarefa...');
-    
     // Obter usuário do token JWT
     const user = await getUserFromToken(event);
-    console.log('👤 Usuário autenticado:', user.email);
     
     const { 
       title, 
@@ -178,21 +151,18 @@ module.exports.createTask = async (event) => {
     
     return response(201, result);
   } catch (error) {
-    console.error('❌ Erro ao criar tarefa:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
 
+// Atualizar tarefa
 module.exports.updateTask = async (event) => {
   try {
-    console.log('✏️ Atualizando tarefa...');
-    
     const taskId = event.pathParameters.id;
     const updates = JSON.parse(event.body);
     
     // Obter usuário do token JWT
     const user = await getUserFromToken(event);
-    console.log('👤 Usuário autenticado:', user.email);
 
     // Buscar tarefa atual
     const currentTask = await db('tasks')
@@ -216,8 +186,6 @@ module.exports.updateTask = async (event) => {
         await db('tasks')
           .where('depends_on_task_id', taskId)
           .update({ is_blocked: false });
-        
-        console.log(`🔓 Desbloqueadas ${dependentTasks.length} tarefas dependentes`);
       }
     }
 
@@ -227,28 +195,23 @@ module.exports.updateTask = async (event) => {
       .where('user_id', user.id)
       .update(updates)
       .returning('*');
-
-    console.log('✅ Tarefa atualizada para o usuário:', user.email, task);
     
     return response(200, {
       success: true,
       task
     });
   } catch (error) {
-    console.error('❌ Erro ao atualizar tarefa:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
 
+// Deletar tarefa
 module.exports.deleteTask = async (event) => {
   try {
-    console.log('🗑️ Deletando tarefa...');
-    
     const taskId = event.pathParameters.id;
     
     // Obter usuário do token JWT
     const user = await getUserFromToken(event);
-    console.log('👤 Usuário autenticado:', user.email);
 
     // Deletar tarefa
     const deletedCount = await db('tasks')
@@ -260,14 +223,11 @@ module.exports.deleteTask = async (event) => {
       return response(404, { error: 'Tarefa não encontrada' });
     }
 
-    console.log('✅ Tarefa deletada para o usuário:', user.email);
-    
     return response(200, {
       success: true,
       message: 'Tarefa deletada com sucesso'
     });
   } catch (error) {
-    console.error('❌ Erro ao deletar tarefa:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
@@ -275,8 +235,6 @@ module.exports.deleteTask = async (event) => {
 // Listar todas as tarefas de todos os usuários (para admin)
 module.exports.getAllTasks = async (event) => {
   try {
-    console.log('🔍 Buscando todas as tarefas de todos os usuários...');
-    
     // Buscar todas as tarefas com informações do usuário
     const tasks = await db('tasks')
       .leftJoin('users', 'tasks.user_id', 'users.id')
@@ -298,8 +256,6 @@ module.exports.getAllTasks = async (event) => {
       )
       .orderBy('tasks.created_at', 'desc');
 
-    console.log('✅ Todas as tarefas encontradas:', tasks.length);
-
     return response(200, {
       success: true,
       tasks: tasks,
@@ -307,7 +263,6 @@ module.exports.getAllTasks = async (event) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao listar todas as tarefas:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
@@ -315,8 +270,6 @@ module.exports.getAllTasks = async (event) => {
 // Listar categorias disponíveis
 module.exports.getCategories = async (event) => {
   try {
-    console.log('🏷️ Buscando categorias...');
-    
     const categories = await db('tasks')
       .distinct('category')
       .whereNotNull('category')
@@ -328,15 +281,12 @@ module.exports.getCategories = async (event) => {
     const defaultCategories = ['geral', 'trabalho', 'pessoal', 'estudos', 'saúde', 'urgente'];
     const allCategories = [...new Set([...categoryList, ...defaultCategories])];
 
-    console.log('✅ Categorias encontradas:', allCategories);
-
     return response(200, {
       success: true,
       categories: allCategories
     });
 
   } catch (error) {
-    console.error('❌ Erro ao listar categorias:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };
@@ -344,8 +294,6 @@ module.exports.getCategories = async (event) => {
 // Buscar tarefas por categoria
 module.exports.getTasksByCategory = async (event) => {
   try {
-    console.log('🔍 Buscando tarefas por categoria...');
-    
     const user = await getUserFromToken(event);
     const category = event.pathParameters.category;
     
@@ -355,15 +303,12 @@ module.exports.getTasksByCategory = async (event) => {
       .orderBy('created_at', 'desc')
       .select('*');
 
-    console.log(`✅ Tarefas da categoria "${category}" encontradas:`, tasks.length);
-    
     return response(200, {
       success: true,
       tasks,
       category
     });
   } catch (error) {
-    console.error('❌ Erro ao buscar tarefas por categoria:', error);
     return response(500, { error: 'Erro interno do servidor: ' + error.message });
   }
 };

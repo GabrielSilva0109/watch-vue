@@ -71,9 +71,7 @@ async function insertTestData() {
         priority: 3
       }
     ]);
-    
     console.log('✅ Dados de teste inseridos com sucesso!');
-    console.log('👤 Usuário de teste: teste@email.com / 123456');
     
   } catch (error) {
     console.error('❌ Erro ao inserir dados de teste:', error);

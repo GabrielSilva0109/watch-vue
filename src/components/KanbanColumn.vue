@@ -14,7 +14,7 @@
       @drop="handleDrop"
     >
       <!-- Loading State -->
-      <div v-if="isLoading" class="space-y-3">
+      <div v-if="isLoading && tasks.length === 0" class="space-y-3">
         <div
           :key="i"
           class="bg-background-lighter rounded-lg p-4 animate-pulse"
@@ -32,6 +32,7 @@
         :task="task"
         :is-updating="updatingTasks.includes(task.id)"
         :is-deleting="deletingTasks.includes(task.id)"
+        :is-optimistic="optimisticTasks.includes(task.id)"
         @dragstart="$emit('dragstart', $event, task)"
         @delete="$emit('delete', $event)"
         @edit="$emit('edit', $event)"
@@ -59,6 +60,10 @@ const props = defineProps({
     default: () => []
   },
   deletingTasks: {
+    type: Array,
+    default: () => []
+  },
+  optimisticTasks: {
     type: Array,
     default: () => []
   },

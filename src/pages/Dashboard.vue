@@ -70,6 +70,7 @@
           :tasks="tasks"
           :updating-tasks="updatingTasks"
           :deleting-tasks="deletingTasks"
+          :optimistic-tasks="optimisticTasks"
           :is-loading-tasks="isLoadingTasks"
           @dragstart="handleDragStart"
           @delete="deleteTask"
@@ -140,6 +141,7 @@ const isLoadingTasks = ref(true)
 // Estados de loading para operações específicas
 const updatingTasks = ref([])
 const deletingTasks = ref([])
+const optimisticTasks = ref([]) 
 
 const isEditingTask = computed(() => editingTask.value !== null)
 
@@ -376,42 +378,50 @@ const handleDragStart = (event, task) => {
 
 const handleDrop = async (event, newStatus) => {
   event.preventDefault()
-  if (draggedTask.value) {
-    updatingTasks.value.push(draggedTask.value.id)
-    try {
-      if (!canMoveTask(draggedTask.value, newStatus)) {
-        const dependencyInfo = draggedTask.value.dependency_info
-        taskError.value = `Esta tarefa está bloqueada até que "${dependencyInfo.task_title}" de ${dependencyInfo.user_name} seja concluída. Aguarde a finalização da tarefa dependente.`
-        // Remover o loading antes do return
-        updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
-        draggedTask.value = null
-        return
-      }
+  if (!draggedTask.value) return
 
-      const response = await fetch(`http://localhost:3000/dev/tasks/${draggedTask.value.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify({
-          status: newStatus
-        })
+  const task = draggedTask.value
+  const oldStatus = task.status
+  
+  // Verificar se pode mover a tarefa
+  if (!canMoveTask(task, newStatus)) {
+    const dependencyInfo = task.dependency_info
+    taskError.value = `Esta tarefa está bloqueada até que "${dependencyInfo.task_title}" de ${dependencyInfo.user_name} seja concluída. Aguarde a finalização da tarefa dependente.`
+    draggedTask.value = null
+    return
+  }
+
+  // 1. Atualização otimista - mover imediatamente
+  optimisticTasks.value.push(task.id)
+  task.status = newStatus
+
+  try {
+    // 2. Fazer a requisição para o servidor
+    const response = await fetch(`http://localhost:3000/dev/tasks/${task.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      },
+      body: JSON.stringify({
+        status: newStatus
       })
+    })
 
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar tarefa')
-      }
-
-      await loadTasks()
-      
-    } catch (err) {
-      taskError.value = err.message || 'Erro ao atualizar tarefa'
-    } finally {
-      // Garantir que o loading seja removido em qualquer caso
-      updatingTasks.value = updatingTasks.value.filter(id => id !== draggedTask.value.id)
-      draggedTask.value = null
+    if (!response.ok) {
+      throw new Error('Erro ao atualizar tarefa')
     }
+
+    // 3. Sucesso - remover da lista otimística
+    optimisticTasks.value = optimisticTasks.value.filter(id => id !== task.id)
+    
+  } catch (err) {
+    // 4. Erro - reverter a mudança
+    task.status = oldStatus
+    optimisticTasks.value = optimisticTasks.value.filter(id => id !== task.id)
+    taskError.value = err.message || 'Erro ao atualizar tarefa'
+  } finally {
+    draggedTask.value = null
   }
 }
 

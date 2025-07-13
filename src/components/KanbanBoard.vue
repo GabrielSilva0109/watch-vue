@@ -7,6 +7,7 @@
       :tasks="getTasksByStatus(status)"
       :updating-tasks="updatingTasks"
       :deleting-tasks="deletingTasks"
+      :optimistic-tasks="optimisticTasks"
       :is-loading="isLoadingTasks"
       @dragstart="handleDragStart"
       @delete="handleDelete"
@@ -30,6 +31,10 @@ const props = defineProps({
     default: () => []
   },
   deletingTasks: {
+    type: Array,
+    default: () => []
+  },
+  optimisticTasks: {
     type: Array,
     default: () => []
   },

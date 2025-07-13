@@ -59,7 +59,7 @@
 
       <!-- Distribuição por Categoria -->
       <div class="bg-background-light p-6 rounded-lg border border-background-lighter">
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Tarefas por Categoria</h3>
+        <h3 class="text-lg font-semibold text-text-primary mb-4">Tarefas do usuário por Categoria</h3>
         <div class="space-y-3">
           <div v-if="getCategoryDistribution().length === 0" class="text-center py-4">
             <p class="text-text-secondary">Nenhuma tarefa cadastrada</p>

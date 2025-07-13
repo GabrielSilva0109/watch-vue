@@ -70,6 +70,7 @@
           :tasks="tasks"
           :updating-tasks="updatingTasks"
           :deleting-tasks="deletingTasks"
+          :is-loading-tasks="isLoadingTasks"
           @dragstart="handleDragStart"
           @delete="deleteTask"
           @drop="handleDrop"
@@ -108,7 +109,7 @@
 
 <script setup>
 
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import Header from '../components/Header.vue'
 import CreateTaskModal from '../components/CreateTaskModal.vue'
 import StatsCard from '../components/StatsCard.vue'
@@ -134,6 +135,7 @@ const taskLoading = ref(false)
 const taskError = ref('')
 const draggedTask = ref(null)
 const editingTask = ref(null)
+const isLoadingTasks = ref(true)
 
 // Estados de loading para operações específicas
 const updatingTasks = ref([])
@@ -142,6 +144,12 @@ const deletingTasks = ref([])
 const isEditingTask = computed(() => editingTask.value !== null)
 
 const emit = defineEmits(['logout', 'user-update'])
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'users') {
+    loadUsers()
+  }
+})
 
 function handleUserUpdate(updatedUserData) {
   // Emitir evento para o componente pai (App.vue) atualizar o user
@@ -253,6 +261,7 @@ const handleTabChange = (tab) => {
 
 // Carregar tarefas
 const loadTasks = async () => {
+  isLoadingTasks.value = true
   tasksLoading.value = true
   taskError.value = ''
   
@@ -278,6 +287,7 @@ const loadTasks = async () => {
     taskError.value = err.message || 'Erro ao carregar tarefas'
   } finally {
     tasksLoading.value = false
+    isLoadingTasks.value = false
   }
 }
 

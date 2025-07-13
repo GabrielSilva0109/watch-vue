@@ -7,6 +7,7 @@
       :tasks="getTasksByStatus(status)"
       :updating-tasks="updatingTasks"
       :deleting-tasks="deletingTasks"
+      :is-loading="isLoadingTasks"
       @dragstart="handleDragStart"
       @delete="handleDelete"
       @drop="handleDrop"
@@ -31,6 +32,10 @@ const props = defineProps({
   deletingTasks: {
     type: Array,
     default: () => []
+  },
+  isLoadingTasks: {
+    type: Boolean,
+    default: false
   }
 })
 

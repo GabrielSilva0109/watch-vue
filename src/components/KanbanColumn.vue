@@ -13,6 +13,19 @@
       @dragover="handleDragOver"
       @drop="handleDrop"
     >
+      <!-- Loading State -->
+      <div v-if="isLoading" class="space-y-3">
+        <div
+          :key="i"
+          class="bg-background-lighter rounded-lg p-4 animate-pulse"
+        >
+          <div class="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+          <div class="h-3 bg-gray-300 rounded w-1/2 mb-2"></div>
+          <div class="h-3 bg-gray-300 rounded w-2/3"></div>
+        </div>
+      </div>
+      
+      <!-- Tasks -->
       <TaskCard
         v-for="task in tasks"
         :key="task.id"
@@ -48,6 +61,10 @@ const props = defineProps({
   deletingTasks: {
     type: Array,
     default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
   }
 })
 

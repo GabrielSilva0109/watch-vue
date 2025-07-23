@@ -13,7 +13,7 @@ npx serverless offline start
 
 ### 1.2 Frontend 
 ```bash
-npm rundev
+npm run dev
 ```
 
 Backend serverless para a aplicação de gerenciamento de tarefas Watch, construído com Node.js, Vue.js e AWS Lambda.
